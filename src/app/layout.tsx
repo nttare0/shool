@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 
+import { InstallProvider } from "@/components/install-app";
 import { ThemeProvider } from "@/components/theme-provider";
 import { StoreProvider } from "@/lib/store";
 
@@ -18,8 +19,9 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/icon.png",
-    apple: "/icon.png",
+    apple: "/apple-touch-icon.png",
   },
+  appleWebApp: { capable: true, title: "Student OS", statusBarStyle: "default" },
   openGraph: {
     title: "Student OS",
     description:
@@ -40,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
         <ThemeProvider>
-          <StoreProvider>{children}</StoreProvider>
+          <InstallProvider><StoreProvider>{children}</StoreProvider></InstallProvider>
         </ThemeProvider>
       </body>
     </html>

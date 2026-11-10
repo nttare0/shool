@@ -69,6 +69,8 @@ type StoreValue = {
   clearWhiteboard: () => void;
 
   addSubject: (name: string) => string;
+  renameSubject: (id: string, name: string) => void;
+  deleteSubject: (id: string) => void;
   resetToDemo: () => void;
   clearEverything: () => void;
   claimDemo: () => void;
@@ -407,6 +409,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }));
         return id;
       },
+
+      renameSubject: (id, name) => {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        mutate((prev) => ({
+          ...prev,
+          subjects: prev.subjects.map((subject) => subject.id === id ? { ...subject, name: trimmed } : subject),
+        }));
+      },
+      deleteSubject: (id) => mutate((prev) => ({
+        ...prev,
+        subjects: prev.subjects.filter((subject) => subject.id !== id),
+        tasks: prev.tasks.map((task) => task.subjectId === id ? { ...task, subjectId: null } : task),
+        notes: prev.notes.map((note) => note.subjectId === id ? { ...note, subjectId: null } : note),
+        decks: prev.decks.map((deck) => deck.subjectId === id ? { ...deck, subjectId: null } : deck),
+      })),
 
       resetToDemo: () => setState(createSeedState()),
       claimDemo: () => mutate((prev) => ({ ...prev, isDemo: false })),

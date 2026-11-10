@@ -7,6 +7,9 @@ import {
   Plus,
   RotateCcw,
   Sparkles,
+  Eye,
+  ChevronRight,
+  BookOpen,
   Trash2,
   X,
 } from "lucide-react";
@@ -54,7 +57,8 @@ export default function FlashcardsPage() {
     0,
   );
 
-  const currentCard = deck?.cards[index] ?? null;
+  const safeIndex = deck?.cards.length ? Math.min(index, deck.cards.length - 1) : 0;
+  const currentCard = deck?.cards[safeIndex] ?? null;
 
   function submitDeck(event: React.FormEvent) {
     event.preventDefault();
@@ -62,6 +66,7 @@ export default function FlashcardsPage() {
     const id = addDeck(deckName, deckSubject || null);
     setSelectedId(id);
     setDeckName("");
+    setDeckSubject("");
     setDeckFormOpen(false);
   }
 
@@ -77,7 +82,7 @@ export default function FlashcardsPage() {
     if (!deck || !currentCard) return;
     reviewCard(deck.id, currentCard.id, gotIt);
     setFlipped(false);
-    setIndex((prev) => (prev + 1 >= deck.cards.length ? 0 : prev + 1));
+    setIndex((safeIndex + 1) % deck.cards.length);
   }
 
   if (!ready) {
@@ -197,7 +202,7 @@ export default function FlashcardsPage() {
                   <div>
                     <h2 className="text-sm font-semibold">{deck.name}</h2>
                     <p className="text-[11px] text-muted-foreground">
-                      Card {deck.cards.length ? index + 1 : 0} of {deck.cards.length}
+                      Card {deck.cards.length ? safeIndex + 1 : 0} of {deck.cards.length}
                     </p>
                   </div>
                   <Button
@@ -212,41 +217,37 @@ export default function FlashcardsPage() {
 
                 {currentCard ? (
                   <>
-                    <button
-                      className="group relative flex min-h-[13rem] w-full flex-col items-center justify-center gap-3 rounded-xl border bg-muted/30 p-6 text-center transition-colors hover:bg-muted/50"
-                      onClick={() => setFlipped((prev) => !prev)}
-                      type="button"
-                    >
-                      <Badge size="sm" variant="outline">
-                        box {currentCard.box + 1} / 5
-                      </Badge>
-                      <p className="max-w-xl text-base font-medium leading-relaxed">
-                        {flipped ? currentCard.back : currentCard.front}
-                      </p>
-                      <span className="absolute bottom-2 right-3 text-[10px] text-muted-foreground opacity-70">
-                        {flipped ? "click to hide answer" : "click to reveal"}
-                      </span>
-                    </button>
-
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-                      <Button
-                        onClick={() => {
-                          setFlipped(false);
-                          setIndex((prev) => (prev + 1 >= deck.cards.length ? 0 : prev + 1));
-                        }}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        <RotateCcw /> Skip
-                      </Button>
-                      <div className="flex gap-2">
-                        <Button onClick={() => advance(false)} size="sm" variant="outline">
-                          <X /> Again
-                        </Button>
-                        <Button onClick={() => advance(true)} size="sm">
-                          <Check /> Got it
-                        </Button>
+                    <div className="overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/[0.09] via-card to-primary/[0.03]">
+                      <div className="flex items-center justify-between gap-3 border-b border-primary/10 px-5 py-3">
+                        <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"><BookOpen className="size-4" /> Study card</span>
+                        <Badge size="sm" variant="outline">Box {currentCard.box + 1} / 5</Badge>
                       </div>
+                      <div className="flex min-h-[15rem] flex-col justify-center px-6 py-8 text-center sm:px-10">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Question</p>
+                        <p className="mx-auto mt-4 max-w-2xl whitespace-pre-wrap break-words text-xl font-semibold leading-relaxed sm:text-2xl">{currentCard.front}</p>
+                        {flipped ? (
+                          <div className="mx-auto mt-7 w-full max-w-2xl rounded-xl border border-primary/15 bg-background/80 px-5 py-5" aria-live="polite">
+                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Answer</p>
+                            <p className="mt-3 whitespace-pre-wrap break-words text-base leading-relaxed">{currentCard.back}</p>
+                          </div>
+                        ) : (
+                          <div className="mt-8"><Button onClick={() => setFlipped(true)} type="button"><Eye /> Show answer</Button></div>
+                        )}
+                      </div>
+                      <div className="h-1 bg-primary/10" aria-hidden="true"><div className="h-full bg-primary transition-all" style={{ width: `${((safeIndex + 1) / deck.cards.length) * 100}%` }} /></div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <Button onClick={() => { setFlipped(false); setIndex((safeIndex + 1) % deck.cards.length); }} size="sm" variant="ghost">
+                        Skip <ChevronRight />
+                      </Button>
+                      {flipped ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="mr-1 text-xs text-muted-foreground">How did you do?</span>
+                          <Button onClick={() => advance(false)} size="sm" variant="outline"><RotateCcw /> Again</Button>
+                          <Button onClick={() => advance(true)} size="sm"><Check /> Got it</Button>
+                        </div>
+                      ) : <p className="text-xs text-muted-foreground">Reveal the answer to rate your recall</p>}
                     </div>
                   </>
                 ) : (
@@ -298,7 +299,7 @@ export default function FlashcardsPage() {
                       <li className="group flex items-start gap-3 px-4 py-2.5" key={card.id}>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm">{card.front}</p>
-                          <p className="truncate text-[11px] text-muted-foreground">{card.back}</p>
+                          <p className="mt-1 whitespace-pre-wrap break-words text-xs text-muted-foreground"><span className="font-medium">Answer: </span>{card.back}</p>
                         </div>
                         <div className="flex shrink-0 items-center gap-1.5">
                           <div className="flex gap-0.5">
@@ -314,8 +315,14 @@ export default function FlashcardsPage() {
                           </div>
                           <Button
                             aria-label="Delete card"
-                            className="opacity-0 transition-opacity group-hover:opacity-100"
-                            onClick={() => deleteCard(deck.id, card.id)}
+                            className="sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 focus-visible:opacity-100"
+                            onClick={() => {
+                              const deletedIndex = deck.cards.findIndex((item) => item.id === card.id);
+                              if (deletedIndex === safeIndex) setFlipped(false);
+                              if (deletedIndex < safeIndex) setIndex(safeIndex - 1);
+                              else setIndex(Math.min(safeIndex, Math.max(0, deck.cards.length - 2)));
+                              deleteCard(deck.id, card.id);
+                            }}
                             size="icon-xs"
                             variant="ghost"
                           >

@@ -8,6 +8,8 @@ import {
   LogIn,
   LogOut,
   Plus,
+  Pencil,
+  X,
   RotateCcw,
   ShieldAlert,
   Trash2,
@@ -15,6 +17,7 @@ import {
 import Link from "next/link";
 import * as React from "react";
 
+import { InstallApp } from "@/components/install-app";
 import { PageHeading, Skeleton } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,12 +36,17 @@ export default function SettingsPage() {
     signOut,
     setFocusGoal,
     addSubject,
+    renameSubject,
+    deleteSubject,
     resetToDemo,
     clearEverything,
   } = useStore();
 
   const [goalDraft, setGoalDraft] = React.useState(String(state.focusGoalMinutes));
   const [subjectName, setSubjectName] = React.useState("");
+  const [editingSubject, setEditingSubject] = React.useState<string | null>(null);
+  const [subjectDraft, setSubjectDraft] = React.useState("");
+  const [removingSubject, setRemovingSubject] = React.useState<string | null>(null);
   const [confirmWipe, setConfirmWipe] = React.useState(false);
 
   React.useEffect(() => setGoalDraft(String(state.focusGoalMinutes)), [state.focusGoalMinutes]);
@@ -68,6 +76,8 @@ export default function SettingsPage() {
         description="Account, sync, subjects and the data living in your workspace."
         title="Settings"
       />
+
+      <InstallApp />
 
       {/* Account */}
       <section className="rounded-2xl border bg-card p-5">
@@ -158,14 +168,39 @@ export default function SettingsPage() {
           Colour-coded across tasks, notes, decks and charts.
         </p>
 
-        <ul className="mt-3 flex flex-wrap gap-2">
+        <ul className="mt-4 divide-y rounded-xl border">
+          {state.subjects.length === 0 && <li className="p-4 text-sm text-muted-foreground">No subjects yet. Add one below.</li>}
           {state.subjects.map((subject) => (
-            <li
-              className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs"
-              key={subject.id}
-            >
-              <span className="size-2 rounded-full" style={{ backgroundColor: subject.color }} />
-              {subject.name}
+            <li className="flex flex-wrap items-center gap-2 px-3 py-2" key={subject.id}>
+              <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: subject.color }} />
+              {editingSubject === subject.id ? (
+                <form className="flex min-w-0 flex-1 items-center gap-2" onSubmit={(event) => {
+                  event.preventDefault();
+                  if (!subjectDraft.trim()) return;
+                  renameSubject(subject.id, subjectDraft);
+                  setEditingSubject(null);
+                }}>
+                  <Input aria-label={`Rename ${subject.name}`} autoFocus className="h-8 max-w-xs" value={subjectDraft} onChange={(event) => setSubjectDraft(event.target.value)} />
+                  <Button size="sm" type="submit" disabled={!subjectDraft.trim()}>Save</Button>
+                  <Button size="icon-xs" variant="ghost" type="button" aria-label="Cancel rename" onClick={() => setEditingSubject(null)}><X /></Button>
+                </form>
+              ) : (
+                <>
+                  <span className="min-w-0 flex-1 break-words text-sm">{subject.name}</span>
+                  {removingSubject === subject.id ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Tasks, notes and decks become General.</span>
+                      <Button size="sm" variant="destructive" onClick={() => { deleteSubject(subject.id); setRemovingSubject(null); }}>Remove</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setRemovingSubject(null)}>Cancel</Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Button size="icon-xs" variant="ghost" aria-label={`Rename ${subject.name}`} onClick={() => { setEditingSubject(subject.id); setSubjectDraft(subject.name); setRemovingSubject(null); }}><Pencil /></Button>
+                      <Button size="icon-xs" variant="ghost" aria-label={`Remove ${subject.name}`} onClick={() => setRemovingSubject(subject.id)}><Trash2 /></Button>
+                    </>
+                  )}
+                </>
+              )}
             </li>
           ))}
         </ul>
