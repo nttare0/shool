@@ -57,6 +57,9 @@ function useSyncLabel() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  React.useEffect(() => {
+    try { window.localStorage.setItem("student-os.visited", "1"); } catch { /* Storage is optional. */ }
+  }, []);
   const { state, user, signOut } = useStore();
   const summary = React.useMemo(() => dashboardSummary(state), [state]);
   const sync = useSyncLabel();
@@ -68,7 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="mx-auto flex w-full max-w-[1560px]">
         {/* Sidebar */}
         <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
-          <Link className="flex items-center gap-2.5 px-2 pb-5" href="/">
+          <Link className="flex items-center gap-2.5 px-2 pb-5" href="/?welcome=1">
             <span className="grid size-9 place-items-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20">
               <GraduationCap className="size-5" />
             </span>
@@ -181,7 +184,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-xl">
             <div className="flex h-14 items-center gap-3 px-4 sm:px-6">
-              <Link className="flex items-center gap-2 lg:hidden" href="/">
+              <Link className="flex items-center gap-2 lg:hidden" href="/?welcome=1">
                 <span className="grid size-8 place-items-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/20">
                   <GraduationCap className="size-4" />
                 </span>
@@ -250,7 +253,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <footer className="border-t px-4 py-4 text-xs text-muted-foreground sm:px-6">
             <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-4 gap-y-2">
               <span>Made with shadcn/ui + bklit charts</span>
-              <Link className="inline-flex items-center gap-1 hover:text-foreground" href="/">
+              <Link className="inline-flex items-center gap-1 hover:text-foreground" href="/?welcome=1">
                 <ArrowLeft className="size-3" /> Back to the landing page
               </Link>
               <Link className="ml-auto hover:text-foreground" href="/settings">
