@@ -20,6 +20,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 
+import { InstallShortcut } from "@/components/install-app";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -203,6 +204,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <sync.icon className={cn("size-3", sync.text === "Syncing" && "animate-spin")} />
                   {sync.text}
                 </span>
+                <InstallShortcut />
                 <ThemeToggle compact />
                 {user ? (
                   <div className="flex items-center gap-1.5">
