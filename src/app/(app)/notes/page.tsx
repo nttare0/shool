@@ -84,7 +84,7 @@ export default function NotesPage() {
         title="Notes"
       />
 
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
         {/* List */}
         <div className="flex flex-col gap-2">
           <div className="relative">
@@ -129,7 +129,7 @@ export default function NotesPage() {
                         <p className="mt-0.5 line-clamp-2 pl-3.5 text-[11px] text-muted-foreground">
                           {note.body.replace(/\s+/g, " ").slice(0, 110) || "Empty note"}
                         </p>
-                        <p className="mt-1 pl-3.5 text-[10px] uppercase tracking-wide text-muted-foreground/70">
+                        <p className="mt-1 break-words pl-3.5 text-[10px] uppercase tracking-wide text-muted-foreground/70">
                           {new Date(note.updatedAt).toLocaleDateString(undefined, {
                             month: "short",
                             day: "numeric",
@@ -156,7 +156,7 @@ export default function NotesPage() {
                   value={draft.title}
                 />
                 <select
-                  className="h-8 rounded-lg border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="h-8 max-w-full min-w-0 rounded-lg border border-input bg-background px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onChange={(event) =>
                     updateNote(selected.id, { subjectId: event.target.value || null })
                   }
@@ -187,7 +187,7 @@ export default function NotesPage() {
                 placeholder="Start writing… markdown-ish lines, bullet points, whatever helps."
                 value={draft.body}
               />
-              <div className="flex items-center justify-between border-t px-4 py-2 text-[11px] text-muted-foreground">
+              <div className="flex flex-wrap items-center justify-between gap-1 border-t px-4 py-2 text-[11px] text-muted-foreground">
                 <span>{draft.body.trim().split(/\s+/).filter(Boolean).length} words</span>
                 <span>Autosaved on this device{user ? " + Firebase" : ""}</span>
               </div>

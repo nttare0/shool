@@ -126,9 +126,9 @@ export default function FocusPage() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.35fr_1fr]">
-        <section className="rounded-2xl border bg-card p-6">
+        <section className="min-w-0 rounded-2xl border bg-card p-4 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex gap-1.5">
+            <div className="flex flex-wrap gap-1.5">
               {PRESETS.map((minutes) => (
                 <button
                   className={cn(
@@ -151,7 +151,7 @@ export default function FocusPage() {
           </div>
 
           <div className="mt-6 flex flex-col items-center">
-            <div className="relative grid size-[220px] place-items-center">
+            <div className="relative grid aspect-square w-full max-w-[220px] place-items-center">
               <svg className="absolute inset-0 -rotate-90" viewBox="0 0 200 200">
                 <circle
                   className="text-muted"
@@ -185,7 +185,7 @@ export default function FocusPage() {
               </div>
             </div>
 
-            <div className="mt-6 flex items-center gap-2">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
               <Button onClick={() => setRunning((prev) => !prev)} size="lg">
                 {running ? <Pause /> : <Play />}
                 {running ? "Pause" : progress > 0 ? "Resume" : "Start"}

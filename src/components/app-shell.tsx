@@ -182,13 +182,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Main column */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur-xl">
+          <header className="sticky top-0 z-30 min-w-0 border-b bg-background/80 backdrop-blur-xl">
             <div className="flex h-14 items-center gap-3 px-4 sm:px-6">
               <Link className="flex items-center gap-2 lg:hidden" href="/?welcome=1">
                 <span className="grid size-8 place-items-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/20">
                   <GraduationCap className="size-4" />
                 </span>
-                <span className="text-sm font-semibold">Student OS</span>
+                <span className="text-sm font-semibold max-[320px]:hidden">Student OS</span>
               </Link>
 
               <div className="hidden items-center gap-2 lg:flex">
@@ -226,7 +226,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Mobile nav */}
-            <nav className="scrollbar-slim flex gap-1 overflow-x-auto border-t px-3 py-1.5 lg:hidden">
+            <nav className="scrollbar-slim flex max-w-full gap-1 overflow-x-auto border-t px-3 py-1.5 lg:hidden">
               {NAV.map((item) => {
                 const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                 return (
@@ -246,8 +246,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
           </header>
 
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div className="mx-auto w-full max-w-6xl">{children}</div>
+          <main className="min-w-0 flex-1 px-3 py-6 sm:px-6 lg:px-8 lg:py-8">
+            <div className="mx-auto w-full min-w-0 max-w-6xl">{children}</div>
           </main>
 
           <footer className="border-t px-4 py-4 text-xs text-muted-foreground sm:px-6">

@@ -142,7 +142,7 @@ export default function SettingsPage() {
           Used by the dashboard gauge and the sidebar progress bar.
         </p>
         <div className="mt-3 flex items-end gap-2">
-          <div className="w-40">
+          <div className="w-40 min-w-0">
             <Label className="text-[11px]" htmlFor="goal-minutes">
               Minutes per day
             </Label>
@@ -174,7 +174,7 @@ export default function SettingsPage() {
             <li className="flex flex-wrap items-center gap-2 px-3 py-2" key={subject.id}>
               <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: subject.color }} />
               {editingSubject === subject.id ? (
-                <form className="flex min-w-0 flex-1 items-center gap-2" onSubmit={(event) => {
+                <form className="flex min-w-0 flex-1 flex-wrap items-center gap-2" onSubmit={(event) => {
                   event.preventDefault();
                   if (!subjectDraft.trim()) return;
                   renameSubject(subject.id, subjectDraft);
@@ -206,7 +206,7 @@ export default function SettingsPage() {
         </ul>
 
         <div className="mt-4 flex items-end gap-2">
-          <div className="w-56">
+          <div className="w-56 min-w-0">
             <Label className="text-[11px]" htmlFor="subject-name">
               New subject
             </Label>

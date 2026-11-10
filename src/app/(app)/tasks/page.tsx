@@ -140,7 +140,7 @@ export default function TasksPage() {
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs text-muted-foreground">Priority</span>
               {PRIORITIES.map((option) => (
                 <button
@@ -234,16 +234,16 @@ export default function TasksPage() {
                   </button>
 
                   <div className="min-w-0 flex-1">
-                    <p className={cn("text-sm", task.done && "line-through")}>{task.title}</p>
+                    <p className={cn("break-words text-sm", task.done && "line-through")}>{task.title}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
-                      <span className="inline-flex items-center gap-1">
+                      <span className="inline-flex min-w-0 items-center gap-1 break-all">
                         <span
                           className="size-1.5 rounded-full"
                           style={{ backgroundColor: subject?.color ?? "var(--muted-foreground)" }}
                         />
                         {subject?.name ?? "General"}
                       </span>
-                      <span className="inline-flex items-center gap-1">
+                      <span className="inline-flex min-w-0 items-center gap-1 break-all">
                         <CalendarDays className="size-3" />
                         {due.label}
                       </span>
@@ -264,7 +264,7 @@ export default function TasksPage() {
 
                   <Button
                     aria-label="Delete task"
-                    className="opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                    className="sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 focus-visible:opacity-100"
                     onClick={() => deleteTask(task.id)}
                     size="icon-xs"
                     variant="ghost"

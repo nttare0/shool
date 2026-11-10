@@ -130,7 +130,7 @@ export default function LandingPage() {
             <span className="grid size-8 place-items-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/20">
               <GraduationCap className="size-4.5" />
             </span>
-            <span className="text-sm font-semibold tracking-tight">Student OS</span>
+            <span className="text-sm font-semibold tracking-tight max-[320px]:hidden">Student OS</span>
           </Link>
 
           <nav className="ml-6 hidden items-center gap-1 text-xs text-muted-foreground md:flex">
@@ -169,7 +169,7 @@ export default function LandingPage() {
 
         <div className="relative mx-auto w-full max-w-6xl px-4 pb-10 pt-16 sm:px-6 sm:pt-24">
           <div className="mx-auto max-w-3xl text-center">
-            <Badge className="mx-auto" size="lg" variant="outline">
+            <Badge className="mx-auto max-w-full text-center" size="lg" variant="outline">
               <Sparkles />
               Rebuilt with shadcn/ui + bklit charts
             </Badge>
@@ -386,7 +386,7 @@ export default function LandingPage() {
             </ul>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:grid-cols-3">
             {STACK.map((item) => (
               <div
                 className="flex flex-col justify-between gap-6 rounded-2xl border bg-card p-4"
