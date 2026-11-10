@@ -1,81 +1,128 @@
-# 🎓 Student OS
+# 🎓 Student OS — v2
 
-![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=flat-square&logo=html5&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=flat-square&logo=tailwind-css&logoColor=white)
-![JavaScript](https://img.shields.io/badge/javascript-%23323330.svg?style=flat-square&logo=javascript&logoColor=%23F7DF1E)
-![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=flat-square&logo=firebase)
-![Help Wanted](https://img.shields.io/badge/Maintained%3F-Help%20Wanted-brightgreen.svg)
+> Tasks, notes, flashcards, a focus timer and a whiteboard in one calm workspace.
+> A ground-up redesign of [nttare/SCHOOL](https://github.com/nttare/SCHOOL) on **shadcn/ui** and **bklit** charts.
 
-A minimalist, glassmorphism-inspired productivity dashboard built specifically for students. No bloat, no ads—just a clean space to get your work done.
-
-**🚀 [View the live version](https://ld-beepbeep.github.io/SCHOOL/)** or take a look at some **[screenshots!](docs/SCREENSHOTS.md)** 📸
-
-<img width="1365" height="594" alt="Student OS Dashboard Screenshot" src="screenshots/school-screenshot1.png" />
+![Next.js](https://img.shields.io/badge/Next.js-16-000?style=flat-square&logo=next.js)
+![React](https://img.shields.io/badge/React-19-087ea4?style=flat-square&logo=react)
+![Tailwind](https://img.shields.io/badge/Tailwind-4-38b2ac?style=flat-square&logo=tailwindcss)
+![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-primitives-111?style=flat-square)
+![bklit](https://img.shields.io/badge/bklit-charts-6d5efc?style=flat-square)
+![Firebase](https://img.shields.io/badge/Firebase-auth%20%2B%20Firestore-ffca28?style=flat-square&logo=firebase&logoColor=000)
 
 ---
 
-### ✨ Features
+## What changed in v2
 
-* **Tasks & Notes:** Manage your daily to-dos and jot down lecture notes in a beautifully clean, distraction-free interface.
-* **Flashcards:** Ace your exams with integrated study decks designed around active recall principles.
-* **Whiteboard:** A built-in, free-draw canvas perfect for mapping out diagrams, mind-mapping concepts, or doing quick sketches.
-* **Cloud Sync:** Never lose your progress. Securely save and sync your data across devices using Google Auth or standard email login.
-* **More Inside:** Dive into the app to discover even more productivity tools tailored for your workflow!
+The original app was a single 200 KB `index.html` plus a 207 KB `script.js` and 125 "patch" files loaded
+via a Tailwind CDN. v2 is a proper React application with a typed data layer:
 
----
+| | v1 (legacy) | v2 (this app) |
+|---|---|---|
+| Rendering | Static HTML + imperative DOM patching | Next.js App Router, React 19, server components |
+| Styling | Tailwind CDN + 60 patch CSS files | Tailwind 4 + shadcn/ui primitives (base-ui) |
+| Charts | Hand-rolled canvas/CSS | [bklit](https://bklit.com) shadcn registry components |
+| State | Global mutable JS + localStorage | Typed store (`src/lib/store.tsx`) + localStorage + Firestore |
+| Data viz | none | area, bar, ring, gauge, radar, heatmap |
 
-### 🛠️ Tech Stack
+The original site is preserved untouched in [`legacy/`](./legacy) for reference.
 
-* **Frontend:** HTML5, Tailwind CSS for the glassmorphism UI, and Vanilla JavaScript.
-* **Backend:** Firebase (Authentication for secure login & Firestore for real-time database syncing).
+## Screens
 
----
+| Route | What's there |
+|---|---|
+| `/` | Marketing landing page with live bklit charts |
+| `/dashboard` | Stats, focus-time area chart, daily-goal gauge, momentum bars, workload ring, streak heatmap, mastery radar |
+| `/tasks` | Create / complete / delete tasks with subjects, priorities, due dates |
+| `/notes` | Split-pane note editor with autosave and search |
+| `/flashcards` | Leitner spaced repetition (5 boxes) with per-deck mastery |
+| `/focus` | Pomodoro timer that logs sessions into your charts |
+| `/whiteboard` | Pressure-friendly canvas with colours, eraser, undo/redo |
+| `/settings` | Account + sync, daily goal, subjects, export, reset |
+| `/login` | Firebase Auth (Google + email), with local-mode fallback |
 
-### 📚 Project Documentation
+## Architecture
 
-Want to see more, help out, or understand how this project is run? Check out the links below:
+```
+src/
+├─ app/
+│  ├─ (app)/               # authenticated-feeling shell (sidebar + topbar)
+│  │  ├─ dashboard/ tasks/ notes/ flashcards/ focus/ whiteboard/ settings/
+│  ├─ login/               # Firebase auth screen
+│  ├─ layout.tsx           # providers: theme + store + fonts
+│  └─ page.tsx             # landing page
+├─ components/
+│  ├─ charts/              # bklit chart components (vendored from the
+│  │                       # bklit registry, MIT — see CREDITS below)
+│  ├─ ui/                  # shadcn/ui primitives (base-ui based)
+│  ├─ app-shell.tsx        # sidebar, topbar, mobile nav, sync pill
+│  └─ dashboard-charts.tsx # the chart panels wired to study data
+└─ lib/
+   ├─ types.ts             # Task, Note, Deck, FocusSession, …
+   ├─ store.tsx            # context store + persistence + Firebase sync
+   ├─ firebase.ts          # lazy auth/Firestore client
+   ├─ analytics.ts         # chart-ready aggregations
+   └─ seed.ts              # sample workspace + subject palette
+```
 
-* 📸 **[Screenshots Gallery](docs/SCREENSHOTS.md):** See more angles and features of the UI!
-* 🤝 **[Contributing Guidelines](docs/CONTRIBUTING.md):** Want to add a feature? Read this first!
-* 📜 **[Code of Conduct](docs/CODE_OF_CONDUCT.md):** Our standards for a welcoming community :)
-* 🔒 **[Security Policy](docs/SECURITY.md):** How to report vulnerabilities safely.
-* 📝 **[Licence](./LICENSE):** Take a look at the open-source licence!
-* 📚 **[Citation](CITATION.cff):** Easily citate this repository.
-* 🛠 **[Beta Repository](https://github.com/LD-beepbeep/SCHOOL-BETA):** Check out the newest version of Student OS!
-* ✨ **[Landing Page](https://ld-beepbeep.github.io/SCHOOL/landing):** The landing page to convince your friends they are missing out ;)
+### Local-first, sync optional
 
----
+Every page works before you sign in: state is written to `localStorage`
+(`student-os.v2`) and the app starts with a sample workspace so the charts have
+something to show. Signing in switches on Firestore sync — the whole state is
+stored as one document at `students/{uid}/state/v2`, with a 1.2 s debounce and a
+visible sync pill in the shell (local mode → syncing → synced / error).
 
-### 💡 The Vibe
+When sync fails (offline, Firestore rules, disabled provider) the app keeps
+working and tells you the data is saved on the device only.
 
-Built by a fellow tinkerer who wanted a study tool that actually looked good. The goal of Student OS is to prove that productivity software doesn't have to be overwhelming to be powerful. Used Claude for some bug fixes, and some code: but it's primarily built by myself :)
+## Getting started
 
----
+```bash
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build
+npm start        # serve the production build
+```
 
-### ⚖️ Legal & Branding
+### Firebase (optional)
 
-This project is licenced under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. 
+The app ships with the original Student OS Firebase project as the default.
+Point it at your own project with env vars:
 
-* **Transparency:** If you host a public version of this app, you **should** provide a link to the source code of your version (including any changes you made) as per the AGPLv3 terms.
-* **Identity:** The logo of Student OS and the site's specific UI design are personal brand assets. You are welcome to fork the code, but please remove original branding or clearly state that your version is a fork.
-* **Side Note:** You are welcome to contribute and try things with my code, I am just a fellow developer!
+```bash
+cp .env.example .env.local
+# then fill in the values from Firebase → Project settings → Your apps → Web app
+```
 
----
+To make sign-in work end to end:
 
-### 🎓 Citation
+1. **Authentication → Sign-in method**: enable *Email/Password* (and *Google* if you want the Google button).
+2. **Authentication → Settings → Authorised domains**: add `localhost` and your Vercel domain
+   (`*.vercel.app` previews included).
+3. **Firestore**: create a database and allow users to read/write their own document, e.g.
 
-If you use Student OS in your research, academic work, or project, please give credit by citing it:
-
-**APA:**
-> Dehairs, L. (2026). Student OS: A minimalist productivity dashboard! (Version 1.0.0) [Computer software]. https://github.com/LD-beepbeep/SCHOOL
-
-**BibTeX:**
-```bibtex
-@software{Dehairs_Student_OS_A_2026,
-  author = {Dehairs, Lars},
-  month = mar,
-  title = {{Student OS: A minimalist productivity dashboard!}},
-  url = {[https://github.com/LD-beepbeep/SCHOOL](https://github.com/LD-beepbeep/SCHOOL)},
-  version = {1.0.0},
-  year = {2026}
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /students/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
 }
+```
+
+## Deploying
+
+The app is a standard Next.js project — `vercel` deploys it with zero config
+(framework preset: Next.js, build: `npm run build`). Add the
+`NEXT_PUBLIC_FIREBASE_*` env vars in the Vercel project settings if you use your
+own Firebase project.
+
+## Credits
+
+- Original project: [nttare/SCHOOL](https://github.com/nttare/SCHOOL) — MIT, preserved in `legacy/`.
+- UI primitives: [shadcn/ui](https://ui.shadcn.com) (base-ui flavour, from the bklit repo).
+- Charts: [bklit](https://bklit.com) — MIT, `packages/ui` registry components vendored into `src/components/charts`.
+- Icons: [lucide](https://lucide.dev). Fonts: Geist.

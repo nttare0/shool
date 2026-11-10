@@ -1,4 +1,20 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# next.js
+.next/
+out/
+build/
+next-env.d.ts.timestamp
+
+# vercel
+.vercel
+
+# misc
 .DS_Store
 Thumbs.db
-node_modules/
 *.log
+*.tsbuildinfo
+.env*.local
