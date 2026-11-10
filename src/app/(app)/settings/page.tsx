@@ -2,7 +2,6 @@
 
 import {
   Check,
-  Cloud,
   CloudOff,
   Download,
   LogIn,
@@ -73,7 +72,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-4">
       <PageHeading
-        description="Account, sync, subjects and the data living in your workspace."
+        description="Account, sync, subjects and workspace data."
         title="Settings"
       />
 
@@ -83,41 +82,17 @@ export default function SettingsPage() {
       <section className="rounded-2xl border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-sm font-semibold">Account &amp; sync</h2>
+            <h2 className="text-sm font-semibold">Account &amp; storage</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {user
-                ? `Signed in as ${user.email ?? user.uid}. Changes sync to Firestore automatically.`
-                : "You're working locally on this device. Sign in to carry your workspace across devices."}
+                ? `Signed in as ${user.email ?? user.uid} with Clerk.`
+                : "You’re working locally on this device. Sign in with Clerk to use your account."}
             </p>
           </div>
-          <Badge
-            size="sm"
-            variant={
-              !user
-                ? "outline"
-                : syncStatus === "synced"
-                  ? "success"
-                  : syncStatus === "error"
-                    ? "error"
-                    : "info"
-            }
-          >
-            {user ? (
-              <>
-                {syncStatus === "synced" ? <Cloud /> : <CloudOff />}
-                {syncStatus}
-              </>
-            ) : (
-              "local mode"
-            )}
-          </Badge>
+          <Badge size="sm" variant="outline"><CloudOff /> {user ? syncStatus : "Local only"}</Badge>
         </div>
-
-        {syncError ? (
-          <p className="mt-3 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
-            {syncError}
-          </p>
-        ) : null}
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{user ? "Your account workspace is saved to Supabase when sync succeeds. Guest data remains separate and is not automatically imported. Changes on multiple devices may overwrite each other; export backups regularly." : "Guest data stays in this browser and is separate from your account workspace."}</p>
+        {syncError ? <p className="mt-2 text-xs text-destructive">Sync failed: {syncError}. Export a backup before refreshing or signing out.</p> : null}
 
         <div className="mt-4 flex flex-wrap gap-2">
           {user ? (
@@ -126,7 +101,7 @@ export default function SettingsPage() {
             </Button>
           ) : (
             <Button render={<Link href="/login" />} size="sm">
-              <LogIn /> Sign in to sync
+              <LogIn /> Sign in
             </Button>
           )}
           <Button onClick={exportJson} size="sm" variant="outline">
@@ -271,11 +246,7 @@ export default function SettingsPage() {
             </Button>
           )}
         </div>
-        {user ? (
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Clearing also overwrites the copy stored in your Firebase account.
-          </p>
-        ) : null}
+
       </section>
     </div>
   );

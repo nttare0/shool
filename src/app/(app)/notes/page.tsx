@@ -12,7 +12,7 @@ import { useStore, useSubjects } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export default function NotesPage() {
-  const { state, ready, user, addNote, updateNote, deleteNote } = useStore();
+  const { state, ready, addNote, updateNote, deleteNote } = useStore();
   const subjects = useSubjects();
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -189,7 +189,7 @@ export default function NotesPage() {
               />
               <div className="flex flex-wrap items-center justify-between gap-1 border-t px-4 py-2 text-[11px] text-muted-foreground">
                 <span>{draft.body.trim().split(/\s+/).filter(Boolean).length} words</span>
-                <span>Autosaved on this device{user ? " + Firebase" : ""}</span>
+                <span>Autosaved; check sync status in Settings</span>
               </div>
             </div>
           ) : (

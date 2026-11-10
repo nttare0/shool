@@ -120,8 +120,8 @@ export default function DashboardPage() {
         }
         description={
           user
-            ? `Signed in as ${user.email ?? "you"} — everything here syncs to Firebase.`
-            : "Your local workspace. Sign in any time to sync it across devices."
+            ? `Signed in as ${user.email ?? "you"} — your account workspace can sync with Supabase.`
+            : "Your workspace is saved on this device only."
         }
         title={`${greeting()}${user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋`}
       />
