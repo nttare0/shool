@@ -49,7 +49,7 @@ export function InstallProvider({ children }: { children: React.ReactNode }) {
 
 const instructions = "On iPhone or iPad, open this site in Safari, tap Share, then Add to Home Screen. On Android or desktop, open your browser menu and choose Install app or Add to Home Screen. The option may be unavailable if the app is already installed or your browser doesn't support installation.";
 
-function InstallButton({ compact = false }: { compact?: boolean }) {
+function InstallButton() {
   const { prompt, installed, clear } = React.useContext(InstallContext);
   const [showHelp, setShowHelp] = React.useState(false);
   const dialog = React.useRef<HTMLDialogElement>(null);
@@ -70,7 +70,7 @@ function InstallButton({ compact = false }: { compact?: boolean }) {
       } finally {
         clear();
       }
-    }}><Download /><span className={compact ? "hidden sm:inline" : ""}>Install app</span></Button>
+    }}><Download /><span>Install app</span></Button>
     {showHelp && <dialog ref={dialog} onClose={() => setShowHelp(false)} aria-labelledby="install-help-title" className="m-auto w-[min(90vw,28rem)] rounded-2xl border bg-card p-6 text-card-foreground shadow-xl backdrop:bg-black/50">
       <div className="flex items-center justify-between gap-3"><h2 id="install-help-title" className="font-semibold">Install Student OS</h2><Button aria-label="Close" variant="ghost" size="icon-xs" onClick={() => dialog.current?.close()}><X /></Button></div>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{instructions}</p>
@@ -78,10 +78,6 @@ function InstallButton({ compact = false }: { compact?: boolean }) {
       <Button className="mt-5" size="sm" onClick={() => dialog.current?.close()}>Got it</Button>
     </dialog>}
   </>;
-}
-
-export function InstallShortcut() {
-  return <InstallButton compact />;
 }
 
 export function InstallApp() {
