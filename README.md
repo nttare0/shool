@@ -126,3 +126,12 @@ own Firebase project.
 - UI primitives: [shadcn/ui](https://ui.shadcn.com) (base-ui flavour, from the bklit repo).
 - Charts: [bklit](https://bklit.com) — MIT, `packages/ui` registry components vendored into `src/components/charts`.
 - Icons: [lucide](https://lucide.dev). Fonts: Geist.
+
+### Install on a device
+
+Open the deployed HTTPS site and go to **Settings → Install Student OS**. Use
+**Install app** when your browser offers it. In iOS Safari, choose Share → Add
+to Home Screen; on Android or desktop, use the browser's install/Add to Home
+Screen menu. This installs a web app, not an app-store download. The app needs
+an internet connection to open; local workspace data is stored on that device.
+Sign-in and cross-device sync additionally require the Firebase setup above.

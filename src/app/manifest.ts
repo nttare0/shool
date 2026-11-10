@@ -6,6 +6,8 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "StudentOS",
     description:
       "Tasks, notes, flashcards, focus sessions and a whiteboard in one calm student workspace.",
+    id: "/",
+    scope: "/",
     start_url: "/dashboard",
     display: "standalone",
     orientation: "portrait-primary",
@@ -13,9 +15,8 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#1a1b22",
     categories: ["education", "productivity"],
     icons: [
-      { src: "/icon.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icon.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icon.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
       { name: "Tasks", url: "/tasks" },
