@@ -21,7 +21,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl border bg-card p-4 transition-colors hover:border-foreground/15",
+        "group relative min-w-0 overflow-hidden rounded-2xl border bg-card p-4 transition-colors hover:border-foreground/15",
         className,
       )}
     >
@@ -39,7 +39,7 @@ export function StatCard({
           <Icon className="size-3.5" />
         </span>
       </div>
-      <p className="mt-3 text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+      <p className="mt-3 break-words text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
       {hint ? <p className="mt-0.5 text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
@@ -55,7 +55,7 @@ export function PageHeading({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3 pb-6">
+    <div className="flex min-w-0 flex-wrap items-end justify-between gap-3 pb-6">
       <div>
         <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
         {description ? (

@@ -143,7 +143,7 @@ export default function FlashcardsPage() {
         </form>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
         <div className="scrollbar-slim flex max-h-[30rem] flex-col gap-2 overflow-y-auto lg:max-h-[64vh]">
           {state.decks.length === 0 ? (
             <div className="flex flex-col items-center gap-2 rounded-2xl border bg-card px-4 py-12 text-center">
@@ -162,7 +162,7 @@ export default function FlashcardsPage() {
               return (
                 <button
                   className={cn(
-                    "rounded-2xl border bg-card p-3 text-left transition-colors hover:border-foreground/20",
+                    "min-w-0 rounded-2xl border bg-card p-3 text-left transition-colors hover:border-foreground/20",
                     item.id === selectedId && "border-primary/40 bg-primary/[0.04]",
                   )}
                   key={item.id}
@@ -170,7 +170,7 @@ export default function FlashcardsPage() {
                   type="button"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium leading-snug">{item.name}</p>
+                    <p className="min-w-0 break-words text-sm font-medium leading-snug">{item.name}</p>
                     {due > 0 ? (
                       <Badge size="sm" variant="warning">
                         {due}
@@ -200,7 +200,7 @@ export default function FlashcardsPage() {
               <div className="rounded-2xl border bg-card p-5">
                 <div className="mb-4 flex items-center justify-between gap-2">
                   <div>
-                    <h2 className="text-sm font-semibold">{deck.name}</h2>
+                    <h2 className="break-words text-sm font-semibold">{deck.name}</h2>
                     <p className="text-[11px] text-muted-foreground">
                       Card {deck.cards.length ? safeIndex + 1 : 0} of {deck.cards.length}
                     </p>

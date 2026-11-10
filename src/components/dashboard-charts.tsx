@@ -67,7 +67,7 @@ export function CompletionsBarChart({ data }: { data: WeekdayPoint[] }) {
 
 export function SubjectRingChart({ data }: { data: RingPoint[] }) {
   return (
-    <RingChart data={data} size={220} strokeWidth={13}>
+    <RingChart className="max-w-[220px]" data={data} strokeWidth={13}>
       {data.map((entry, index) => (
         <Ring color={entry.color} index={index} key={entry.label} />
       ))}
@@ -84,7 +84,7 @@ export function MasteryRadarChart({
   metrics: RadarMetric[];
 }) {
   return (
-    <RadarChart data={data} metrics={metrics} size={280}>
+    <RadarChart className="max-w-[280px]" data={data} metrics={metrics}>
       <RadarGrid />
       <RadarAxis />
       <RadarLabels fontSize={10} offset={18} />
@@ -100,13 +100,12 @@ export function GoalGauge({ value, minutes, goal }: { value: number; minutes: nu
     <Gauge
       activeFill="var(--chart-line-primary)"
       centerValue={minutes}
-      className="mx-auto"
+      className="mx-auto max-w-[260px]"
       defaultLabel={`of ${goal}m goal`}
-      height={190}
+      minWidth={0}
       suffix="m"
       totalNotches={36}
       value={value}
-      width={260}
     />
   );
 }
@@ -143,8 +142,8 @@ export function ChartFrame({
   className?: string;
 }) {
   return (
-    <section className={`rounded-2xl border bg-card p-5 ${className ?? ""}`}>
-      <header className="mb-4 flex items-start justify-between gap-3">
+    <section className={`min-w-0 rounded-2xl border bg-card p-4 sm:p-5 ${className ?? ""}`}>
+      <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
           {description ? (

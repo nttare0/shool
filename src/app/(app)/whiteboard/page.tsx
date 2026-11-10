@@ -259,7 +259,7 @@ export default function WhiteboardPage() {
             ref={canvasRef}
           />
           {strokes.length === 0 ? (
-            <p className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-white/35">
+            <p className="pointer-events-none absolute inset-0 grid place-items-center px-4 text-center text-sm text-white/35">
               Draw something — a mind map, a timeline, a doodle.
             </p>
           ) : null}
