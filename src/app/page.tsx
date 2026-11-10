@@ -20,6 +20,7 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import {
@@ -79,6 +80,18 @@ const STACK = [
 ];
 
 export default function LandingPage() {
+  const router = useRouter();
+  React.useEffect(() => {
+    try {
+      // A deliberate link back to the welcome page overrides the returning-visitor redirect.
+      const welcome = new URLSearchParams(window.location.search).get("welcome") === "1";
+      const hasVisited = window.localStorage.getItem("student-os.visited") === "1";
+      const existingWorkspace = window.localStorage.getItem("student-os.v2");
+      if (!welcome && (hasVisited || existingWorkspace)) router.replace("/dashboard");
+    } catch {
+      // Storage may be disabled; the welcome page remains available.
+    }
+  }, [router]);
   const seed = React.useMemo(() => createSeedState(), []);
   const focusSeries = React.useMemo(() => minutesByDay(seed.sessions, 21), [seed.sessions]);
   const weekday = React.useMemo(
