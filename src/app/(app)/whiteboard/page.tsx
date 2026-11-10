@@ -31,6 +31,8 @@ export default function WhiteboardPage() {
   const [redoStack, setRedoStack] = React.useState<Stroke[]>([]);
   const drawing = React.useRef(false);
   const hydrated = React.useRef(false);
+  const strokesRef = React.useRef<Stroke[]>(strokes);
+  strokesRef.current = strokes;
 
   // Load the saved board once.
   React.useEffect(() => {
@@ -100,12 +102,15 @@ export default function WhiteboardPage() {
   function onPointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
     if (event.button !== 0) return;
     event.currentTarget.setPointerCapture(event.pointerId);
+    // Read the geometry synchronously: React nulls `currentTarget` once this
+    // handler returns, so dereferencing the event inside a state updater throws.
+    const point = pointFromEvent(event);
     drawing.current = true;
     setRedoStack([]);
     setStrokes((prev) => [
       ...prev,
       {
-        points: [pointFromEvent(event)],
+        points: [point],
         color,
         width: erasing ? size * 2.5 : size,
         erase: erasing,
@@ -129,7 +134,9 @@ export default function WhiteboardPage() {
   function finishStroke() {
     if (!drawing.current) return;
     drawing.current = false;
-    setWhiteboard(strokes);
+    // Use the ref so a stroke finished in the same tick as the last pointermove
+    // isn't persisted from a stale closure.
+    setWhiteboard(strokesRef.current);
   }
 
   function undo() {
@@ -146,7 +153,7 @@ export default function WhiteboardPage() {
     setRedoStack((redo) => {
       if (!redo.length) return redo;
       const restored = redo[redo.length - 1];
-      const next = [...strokes, restored];
+      const next = [...strokesRef.current, restored];
       setStrokes(next);
       setWhiteboard(next);
       return redo.slice(0, -1);
