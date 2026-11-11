@@ -25,6 +25,7 @@ type StoreValue = {
   ready: boolean;
   user: AuthUser | null;
   signOut: () => Promise<void>;
+  retrySync: () => void;
   syncStatus: "local" | "loading" | "saving" | "synced" | "error";
   syncError: string | null;
 
@@ -96,6 +97,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [loadedScope, setLoadedScope] = React.useState<string | null>(null);
   const [syncStatus, setSyncStatus] = React.useState<StoreValue["syncStatus"]>("loading");
   const [syncError, setSyncError] = React.useState<string | null>(null);
+  const [recovery, setRecovery] = React.useState<{ local: AppState; remote: AppState | null } | null>(null);
+  const [retry, setRetry] = React.useState(0);
   const latest = React.useRef(0);
   const initialJson = React.useRef<string | null>(null);
   const writeQueue = React.useRef<Promise<void>>(Promise.resolve());
@@ -111,6 +114,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     setLoadedScope(null);
     setSyncError(null);
+    setRecovery(null);
     if (scope === "guest") {
       setState(loadLocal(STORAGE_KEY) ?? createSeedState());
       setSyncStatus("local");
@@ -121,27 +125,40 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         if (!client) throw new Error("Supabase is not configured.");
+        const token = await getToken();
+        if (!token) throw new Error("Your Clerk session is not ready. Please sign in again.");
+        let claims: { role?: string };
+        try { claims = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); }
+        catch { throw new Error("Could not read the Clerk session token."); }
+        if (claims.role !== "authenticated") throw new Error("Clerk session tokens need the role claim set to authenticated for Supabase. Ask the administrator to configure it in Clerk.");
         // Finish queued writes from the previous session before reading.
         await writeQueue.current;
-        if (window.localStorage.getItem(`${STORAGE_KEY}.${scope}.pending`)) throw new Error("This browser has unsynced changes. Download the local backup before continuing.");
         const { data, error } = await client.from("student_os_workspaces").select("state").eq("user_id", scope).maybeSingle();
         if (error) throw error;
         if (cancelled) return;
         const remote = data?.state as AppState | undefined;
         if (remote && remote.version !== 2) throw new Error("Workspace format is not supported.");
+        const local = loadLocal(`${STORAGE_KEY}.${scope}`);
+        if (window.localStorage.getItem(`${STORAGE_KEY}.${scope}.pending`)) {
+          if (!local) throw new Error("An unsynced local copy was marked but could not be read. Do not clear browser storage.");
+          setRecovery({ local, remote: remote ?? null });
+          setSyncStatus("error");
+          setSyncError("Choose which workspace to keep. The copies may contain different changes.");
+          return;
+        }
         const initial = remote ?? createSeedState();
-        initialJson.current = JSON.stringify(initial);
+        initialJson.current = remote ? JSON.stringify(initial) : null;
         setState(initial);
         setLoadedScope(scope);
-        setSyncStatus("synced");
+        setSyncStatus(remote ? "synced" : "saving");
       } catch (error) {
         if (cancelled) return;
         setSyncStatus("error");
-        setSyncError(error instanceof Error ? error.message : "Could not load your cloud workspace.");
+        setSyncError(error && typeof error === "object" && "message" in error ? String(error.message) : "Could not load your cloud workspace.");
       }
     })();
     return () => { cancelled = true; };
-  }, [scope, client]);
+  }, [scope, client, getToken]);
 
   React.useEffect(() => {
     if (!ready || !scope) return;
@@ -159,12 +176,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }).catch((error) => {
         if (latest.current === version) {
           setSyncStatus("error");
-          setSyncError(error instanceof Error ? error.message : "Could not save to Supabase.");
+          setSyncError(error && typeof error === "object" && "message" in error ? String(error.message) : "Could not save to Supabase.");
         }
       });
     }, 1200);
     return () => window.clearTimeout(timer);
-  }, [state, ready, scope, client]);
+  }, [state, ready, scope, client, retry]);
 
   const mutate = React.useCallback((updater: (prev: AppState) => AppState) => {
     setState((prev) => ({ ...updater(prev), updatedAt: new Date().toISOString() }));
@@ -177,6 +194,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       user,
       syncStatus,
       syncError,
+      retrySync: () => setRetry((n) => n + 1),
       signOut: async () => {
         if ((syncStatus === "saving" || syncStatus === "error") && !window.confirm("Your changes may not be saved to the cloud. Sign out anyway?")) return;
         await signOut();
@@ -375,8 +393,40 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     };
   }, [state, ready, user, signOut, mutate, syncStatus, syncError]);
 
+  function downloadCopy(copy: AppState, name: string) {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(copy, null, 2)], { type: "application/json" }));
+    const a = document.createElement("a"); a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   if (!ready) return <main className="mx-auto max-w-lg p-8 text-sm">
-    {syncStatus === "error" ? <div className="space-y-4"><p>Could not load your workspace. No cloud data was overwritten.</p><p>{syncError}</p><p>A local account copy, if available, remains in this browser. Do not clear browser storage.</p>{scope && scope !== "guest" && <button className="underline" onClick={() => { const copy = localStorage.getItem(`${STORAGE_KEY}.${scope}`); if (!copy) return; const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([copy], { type: "application/json" })); a.download = "student-os-local-backup.json"; a.click(); URL.revokeObjectURL(a.href); }}>Download local backup</button>}{" · "}<button className="underline" onClick={() => window.location.reload()}>Retry</button>{" · "}<button className="underline" onClick={() => void signOut()}>Sign out</button></div> : <p>Loading your workspace…</p>}
+    {syncStatus === "error" ? <div className="space-y-4">
+      <h1 className="text-lg font-semibold">{recovery ? "Recover your workspace" : "Could not load your workspace"}</h1>
+      <p>{syncError}</p>
+      {recovery ? <>
+        <p>Your browser has an unsynced copy{recovery.remote ? " and your account has a cloud copy" : "; no cloud copy was found"}. Download backups before choosing. Choosing one replaces the other; they are not merged.</p>
+        <div className="flex flex-wrap gap-4">
+          <button className="underline" onClick={() => downloadCopy(recovery.local, "student-os-local-backup.json")}>Download local backup</button>
+          {recovery.remote && <button className="underline" onClick={() => downloadCopy(recovery.remote!, "student-os-cloud-backup.json")}>Download cloud backup</button>}
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <button className="rounded-md bg-primary px-3 py-2 text-primary-foreground" onClick={() => {
+            if (!window.confirm("Save the local copy to your account? This replaces the cloud copy. Download backups first.")) return;
+            setState(recovery.local); setLoadedScope(scope); setSyncStatus("saving"); setSyncError(null); setRecovery(null);
+            // Force saving even if the two copies serialize identically.
+            initialJson.current = null;
+          }}>Save local copy to account</button>
+          {recovery.remote && <button className="rounded-md border px-3 py-2" onClick={() => {
+            if (!window.confirm("Use the cloud copy? The unsynced local changes will be replaced. Download a local backup first.")) return;
+            try { localStorage.setItem(`${STORAGE_KEY}.${scope}`, JSON.stringify(recovery.remote)); localStorage.removeItem(`${STORAGE_KEY}.${scope}.pending`); } catch { setSyncError("Could not update browser storage. Download a backup and try again."); return; }
+            initialJson.current = JSON.stringify(recovery.remote); setState(recovery.remote!); setLoadedScope(scope); setSyncStatus("synced"); setSyncError(null); setRecovery(null);
+          }}>Use cloud copy</button>}
+        </div>
+      </> : <><p>Your local account copy, if available, remains in this browser. Do not clear browser storage.</p>
+        {scope && scope !== "guest" && loadLocal(`${STORAGE_KEY}.${scope}`) && <button className="underline" onClick={() => downloadCopy(loadLocal(`${STORAGE_KEY}.${scope}`)!, "student-os-local-backup.json")}>Download local backup</button>}
+        <button className="underline" onClick={() => window.location.reload()}>Retry</button></>}
+      <button className="block underline" onClick={() => void signOut()}>Sign out</button>
+    </div> : <p>Loading your workspace…</p>}
   </main>;
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
