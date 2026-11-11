@@ -5,7 +5,6 @@ import { GeistSans } from "geist/font/sans";
 
 import { InstallProvider } from "@/components/install-app";
 import { ThemeProvider } from "@/components/theme-provider";
-import { StoreProvider } from "@/lib/store";
 
 import "./globals.css";
 
@@ -57,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
         <ClerkProvider>
         <ThemeProvider>
-          <InstallProvider><StoreProvider>{children}</StoreProvider></InstallProvider>
+          <InstallProvider>{children}</InstallProvider>
         </ThemeProvider>
         </ClerkProvider>
       </body>

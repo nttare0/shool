@@ -32,6 +32,7 @@ export default function SettingsPage() {
     user,
     syncStatus,
     syncError,
+    retrySync,
     signOut,
     setFocusGoal,
     addSubject,
@@ -92,7 +93,7 @@ export default function SettingsPage() {
           <Badge size="sm" variant="outline"><CloudOff /> {user ? syncStatus : "Local only"}</Badge>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{user ? "Your account workspace is saved to Supabase when sync succeeds. Guest data remains separate and is not automatically imported. Changes on multiple devices may overwrite each other; export backups regularly." : "Guest data stays in this browser and is separate from your account workspace."}</p>
-        {syncError ? <p className="mt-2 text-xs text-destructive">Sync failed: {syncError}. Export a backup before refreshing or signing out.</p> : null}
+        {syncError ? <div className="mt-2 text-xs text-destructive"><p>Sync failed: {syncError}. Export a backup before refreshing or signing out.</p><button className="mt-2 underline" onClick={retrySync}>Retry saving</button></div> : null}
 
         <div className="mt-4 flex flex-wrap gap-2">
           {user ? (
