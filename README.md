@@ -8,7 +8,7 @@
 ![Tailwind](https://img.shields.io/badge/Tailwind-4-38b2ac?style=flat-square&logo=tailwindcss)
 ![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-primitives-111?style=flat-square)
 ![bklit](https://img.shields.io/badge/bklit-charts-6d5efc?style=flat-square)
-![Firebase](https://img.shields.io/badge/Firebase-auth%20%2B%20Firestore-ffca28?style=flat-square&logo=firebase&logoColor=000)
+![Clerk](https://img.shields.io/badge/Clerk-sign%20in-6c47ff?style=flat-square)
 
 ---
 
@@ -22,7 +22,7 @@ via a Tailwind CDN. v2 is a proper React application with a typed data layer:
 | Rendering | Static HTML + imperative DOM patching | Next.js App Router, React 19, server components |
 | Styling | Tailwind CDN + 60 patch CSS files | Tailwind 4 + shadcn/ui primitives (base-ui) |
 | Charts | Hand-rolled canvas/CSS | [bklit](https://bklit.com) shadcn registry components |
-| State | Global mutable JS + localStorage | Typed store (`src/lib/store.tsx`) + localStorage + Firestore |
+| State | Global mutable JS + localStorage | Typed store (`src/lib/store.tsx`) + localStorage |
 | Data viz | none | area, bar, ring, gauge, radar, heatmap |
 
 The original site is preserved untouched in [`legacy/`](./legacy) for reference.
@@ -38,8 +38,8 @@ The original site is preserved untouched in [`legacy/`](./legacy) for reference.
 | `/flashcards` | Leitner spaced repetition (5 boxes) with per-deck mastery |
 | `/focus` | Pomodoro timer that logs sessions into your charts |
 | `/whiteboard` | Pressure-friendly canvas with colours, eraser, undo/redo |
-| `/settings` | Account + sync, daily goal, subjects, export, reset |
-| `/login` | Firebase Auth (Google + email), with local-mode fallback |
+| `/settings` | Account + local storage, daily goal, subjects, export, reset |
+| `/login` | Clerk sign-in, with local-mode fallback |
 
 ## Architecture
 
@@ -48,33 +48,30 @@ src/
 ├─ app/
 │  ├─ (app)/               # authenticated-feeling shell (sidebar + topbar)
 │  │  ├─ dashboard/ tasks/ notes/ flashcards/ focus/ whiteboard/ settings/
-│  ├─ login/               # Firebase auth screen
+│  ├─ login/               # Clerk sign-in screen
 │  ├─ layout.tsx           # providers: theme + store + fonts
 │  └─ page.tsx             # landing page
 ├─ components/
 │  ├─ charts/              # bklit chart components (vendored from the
 │  │                       # bklit registry, MIT — see CREDITS below)
 │  ├─ ui/                  # shadcn/ui primitives (base-ui based)
-│  ├─ app-shell.tsx        # sidebar, topbar, mobile nav, sync pill
+│  ├─ app-shell.tsx        # sidebar, topbar, mobile nav, storage status
 │  └─ dashboard-charts.tsx # the chart panels wired to study data
 └─ lib/
    ├─ types.ts             # Task, Note, Deck, FocusSession, …
-   ├─ store.tsx            # context store + persistence + Firebase sync
-   ├─ firebase.ts          # lazy auth/Firestore client
+   ├─ store.tsx            # context store + local persistence
    ├─ analytics.ts         # chart-ready aggregations
    └─ seed.ts              # sample workspace + subject palette
 ```
 
-### Local-first, sync optional
+### Clerk and Supabase workspaces
 
-Every page works before you sign in: state is written to `localStorage`
-(`student-os.v2`) and the app starts with a sample workspace so the charts have
-something to show. Signing in switches on Firestore sync — the whole state is
-stored as one document at `students/{uid}/state/v2`, with a 1.2 s debounce and a
-visible sync pill in the shell (local mode → syncing → synced / error).
-
-When sync fails (offline, Firestore rules, disabled provider) the app keeps
-working and tells you the data is saved on the device only.
+Guest data remains in browser storage and is not imported automatically. Signed-in
+users load a separate workspace protected by Supabase RLS using their Clerk subject.
+Edits are saved after a short delay. The app blocks a cloud load if it detects a
+local unsynced copy, allowing a backup download rather than overwriting it. Export
+backups regularly: simultaneous edits on different devices are last-write-wins.
+Existing Firebase documents are not modified or migrated.
 
 ## Getting started
 
@@ -85,40 +82,22 @@ npm run build    # production build
 npm start        # serve the production build
 ```
 
-### Firebase (optional)
+### Clerk setup
 
-The app ships with the original Student OS Firebase project as the default.
-Point it at your own project with env vars:
-
-```bash
-cp .env.example .env.local
-# then fill in the values from Firebase → Project settings → Your apps → Web app
-```
-
-To make sign-in work end to end:
-
-1. **Authentication → Sign-in method**: enable *Email/Password* (and *Google* if you want the Google button).
-2. **Authentication → Settings → Authorised domains**: add `localhost` and your Vercel domain
-   (`*.vercel.app` previews included).
-3. **Firestore**: create a database and allow users to read/write their own document, e.g.
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /students/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
-    }
-  }
-}
-```
+Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+from the Clerk dashboard. Enable the desired sign-in methods in Clerk. Set the
+same public key in Vercel for the desired deployment environments. Configure
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, enable
+Clerk third-party auth in Supabase, and add `role: authenticated` to Clerk session
+tokens. Apply the RLS migration to the Supabase project. The app uses
+Clerk client components and does not need a secret key for server-side auth.
+Test keys are for development; configure a production Clerk instance before
+using real accounts. Account workspaces sync through Supabase when configured.
 
 ## Deploying
 
-The app is a standard Next.js project — `vercel` deploys it with zero config
-(framework preset: Next.js, build: `npm run build`). Add the
-`NEXT_PUBLIC_FIREBASE_*` env vars in the Vercel project settings if you use your
-own Firebase project.
+Deploy as a Next.js project on Vercel after setting the publishable key. Existing
+Firebase-synced workspaces are not imported; export local copies before switching.
 
 ## Credits
 
@@ -134,4 +113,4 @@ Open the deployed HTTPS site and go to **Settings → Install Student OS**. Use
 to Home Screen; on Android or desktop, use the browser's install/Add to Home
 Screen menu. This installs a web app, not an app-store download. The app needs
 an internet connection to open; local workspace data is stored on that device.
-Sign-in and cross-device sync additionally require the Firebase setup above.
+Sign-in and account sync require the Clerk and Supabase setup above.

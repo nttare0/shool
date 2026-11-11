@@ -2,18 +2,8 @@
 
 import * as React from "react";
 
-import {
-  type AuthUser,
-  describeAuthError,
-  isFirebaseConfigured,
-  loadRemoteState,
-  registerWithEmail,
-  saveRemoteState,
-  signInWithEmail,
-  signInWithGoogle,
-  signOutNow,
-  watchAuth,
-} from "./firebase";
+import { useAuth, useClerk, useUser } from "@clerk/nextjs";
+import { createClient } from "@supabase/supabase-js";
 import { createEmptyState, createSeedState, SUBJECT_PALETTE, uid } from "./seed";
 import type {
   AppState,
@@ -28,19 +18,15 @@ import type {
 
 const STORAGE_KEY = "student-os.v2";
 
-export type SyncStatus = "local" | "connecting" | "syncing" | "synced" | "error";
+type AuthUser = { uid: string; email: string | null; name: string | null };
 
 type StoreValue = {
   state: AppState;
   ready: boolean;
   user: AuthUser | null;
-  syncStatus: SyncStatus;
-  syncError: string | null;
-
-  signInGoogle: () => Promise<void>;
-  signInEmail: (email: string, password: string) => Promise<void>;
-  signUpEmail: (email: string, password: string, name?: string) => Promise<void>;
   signOut: () => Promise<void>;
+  syncStatus: "local" | "loading" | "saving" | "synced" | "error";
+  syncError: string | null;
 
   addTask: (input: {
     title: string;
@@ -84,9 +70,9 @@ export function useStore(): StoreValue {
   return ctx;
 }
 
-function loadLocal(): AppState | null {
+function loadLocal(key: string): AppState | null {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as AppState;
     if (!parsed || parsed.version !== 2) return null;
@@ -98,145 +84,102 @@ function loadLocal(): AppState | null {
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = React.useState<AppState>(() => createEmptyState());
-  const [ready, setReady] = React.useState(false);
-  const [user, setUser] = React.useState<AuthUser | null>(null);
-  const [syncStatus, setSyncStatus] = React.useState<SyncStatus>("local");
+  const { user: clerkUser, isLoaded } = useUser();
+  const { getToken } = useAuth();
+  const { signOut } = useClerk();
+  const user = React.useMemo<AuthUser | null>(() => clerkUser ? ({
+    uid: clerkUser.id,
+    email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
+    name: clerkUser.fullName ?? clerkUser.firstName ?? null,
+  }) : null, [clerkUser]);
+  const scope = isLoaded ? (user?.uid ?? "guest") : null;
+  const [loadedScope, setLoadedScope] = React.useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = React.useState<StoreValue["syncStatus"]>("loading");
   const [syncError, setSyncError] = React.useState<string | null>(null);
-
-  const lastSyncedJson = React.useRef<string | null>(null);
-  const hydrationDone = React.useRef(false);
-
-  // ---- hydrate from localStorage (or seed a demo workspace) ----
-  React.useEffect(() => {
-    const local = loadLocal();
-    setState(local ?? createSeedState());
-    setReady(true);
-    hydrationDone.current = true;
-  }, []);
+  const latest = React.useRef(0);
+  const initialJson = React.useRef<string | null>(null);
+  const writeQueue = React.useRef<Promise<void>>(Promise.resolve());
+  const ready = scope !== null && loadedScope === scope;
+  const client = React.useMemo(() => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    return typeof window !== "undefined" && url && key ? createClient(url, key, { accessToken: async () => await getToken() }) : null;
+  }, [getToken]);
 
   React.useEffect(() => {
-    if (!ready) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* quota — ignore, the app still works in memory */
+    if (!scope) return;
+    let cancelled = false;
+    setLoadedScope(null);
+    setSyncError(null);
+    if (scope === "guest") {
+      setState(loadLocal(STORAGE_KEY) ?? createSeedState());
+      setSyncStatus("local");
+      setLoadedScope(scope);
+      return;
     }
-  }, [state, ready]);
+    setSyncStatus("loading");
+    (async () => {
+      try {
+        if (!client) throw new Error("Supabase is not configured.");
+        // Finish queued writes from the previous session before reading.
+        await writeQueue.current;
+        if (window.localStorage.getItem(`${STORAGE_KEY}.${scope}.pending`)) throw new Error("This browser has unsynced changes. Download the local backup before continuing.");
+        const { data, error } = await client.from("student_os_workspaces").select("state").eq("user_id", scope).maybeSingle();
+        if (error) throw error;
+        if (cancelled) return;
+        const remote = data?.state as AppState | undefined;
+        if (remote && remote.version !== 2) throw new Error("Workspace format is not supported.");
+        const initial = remote ?? createSeedState();
+        initialJson.current = JSON.stringify(initial);
+        setState(initial);
+        setLoadedScope(scope);
+        setSyncStatus("synced");
+      } catch (error) {
+        if (cancelled) return;
+        setSyncStatus("error");
+        setSyncError(error instanceof Error ? error.message : "Could not load your cloud workspace.");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [scope, client]);
+
+  React.useEffect(() => {
+    if (!ready || !scope) return;
+    try { window.localStorage.setItem(scope === "guest" ? STORAGE_KEY : `${STORAGE_KEY}.${scope}`, JSON.stringify(state)); } catch { /* storage can be unavailable */ }
+    if (scope === "guest" || !client) return;
+    if (JSON.stringify(state) === initialJson.current) return;
+    try { window.localStorage.setItem(`${STORAGE_KEY}.${scope}.pending`, "1"); } catch { /* backup may be unavailable */ }
+    const version = ++latest.current;
+    setSyncStatus("saving");
+    const timer = window.setTimeout(() => {
+      writeQueue.current = writeQueue.current.then(async () => {
+        const { error } = await client.from("student_os_workspaces").upsert({ user_id: scope, state, updated_at: new Date().toISOString() });
+        if (error) throw error;
+        if (latest.current === version) { try { window.localStorage.removeItem(`${STORAGE_KEY}.${scope}.pending`); } catch { /* optional */ } setSyncStatus("synced"); setSyncError(null); }
+      }).catch((error) => {
+        if (latest.current === version) {
+          setSyncStatus("error");
+          setSyncError(error instanceof Error ? error.message : "Could not save to Supabase.");
+        }
+      });
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [state, ready, scope, client]);
 
   const mutate = React.useCallback((updater: (prev: AppState) => AppState) => {
     setState((prev) => ({ ...updater(prev), updatedAt: new Date().toISOString() }));
   }, []);
 
-  // ---- auth + cloud sync ----
-  React.useEffect(() => {
-    if (!isFirebaseConfigured()) return;
-    let unsub: (() => void) | undefined;
-    let cancelled = false;
-
-    watchAuth((nextUser) => {
-      if (cancelled) return;
-      setUser(nextUser);
-      if (!nextUser) {
-        setSyncStatus("local");
-        setSyncError(null);
-      }
-    })
-      .then((fn) => {
-        if (cancelled) fn();
-        else unsub = fn;
-      })
-      .catch(() => {
-        /* Firebase unavailable — stay in local mode */
-      });
-
-    return () => {
-      cancelled = true;
-      unsub?.();
-    };
-  }, []);
-
-  // Pull once per sign-in.
-  React.useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    setSyncStatus("connecting");
-
-    (async () => {
-      try {
-        const remote = await loadRemoteState(user.uid);
-        if (cancelled) return;
-        const local = loadLocal() ?? createEmptyState();
-        if (remote && !local.isDemo) {
-          setState(remote);
-        } else {
-          const payload = remote && local.isDemo ? remote : local;
-          setState(payload);
-          await saveRemoteState(user.uid, payload);
-        }
-        lastSyncedJson.current = JSON.stringify(state);
-        setSyncStatus("synced");
-        setSyncError(null);
-      } catch (error) {
-        if (cancelled) return;
-        setSyncStatus("error");
-        setSyncError(
-          error instanceof Error
-            ? `Cloud sync unavailable (${error.message}). Your work is still saved on this device.`
-            : "Cloud sync unavailable. Your work is still saved on this device.",
-        );
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid]);
-
-  // Push debounced changes.
-  React.useEffect(() => {
-    if (!user || !ready || syncStatus === "error") return;
-    const json = JSON.stringify(state);
-    if (json === lastSyncedJson.current) return;
-
-    const timer = window.setTimeout(async () => {
-      setSyncStatus("syncing");
-      try {
-        await saveRemoteState(user.uid, state);
-        lastSyncedJson.current = json;
-        setSyncStatus("synced");
-      } catch {
-        setSyncStatus("error");
-        setSyncError("Cloud sync failed — your changes are saved on this device.");
-      }
-    }, 1200);
-
-    return () => window.clearTimeout(timer);
-  }, [state, user, ready, syncStatus]);
-
   const value = React.useMemo<StoreValue>(() => {
-    const guard = async (fn: () => Promise<unknown>) => {
-      try {
-        await fn();
-      } catch (error) {
-        throw new Error(describeAuthError(error));
-      }
-    };
-
     return {
       state,
       ready,
       user,
       syncStatus,
       syncError,
-
-      signInGoogle: () => guard(signInWithGoogle),
-      signInEmail: (email, password) => guard(() => signInWithEmail(email, password)),
-      signUpEmail: (email, password, name) => guard(() => registerWithEmail(email, password, name)),
       signOut: async () => {
-        await signOutNow();
-        setUser(null);
-        setSyncStatus("local");
+        if ((syncStatus === "saving" || syncStatus === "error") && !window.confirm("Your changes may not be saved to the cloud. Sign out anyway?")) return;
+        await signOut();
       },
 
       addTask: ({ title, subjectId, dueDate, priority }) =>
@@ -430,8 +373,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       claimDemo: () => mutate((prev) => ({ ...prev, isDemo: false })),
       clearEverything: () => setState(createEmptyState()),
     };
-  }, [state, ready, user, syncStatus, syncError, mutate]);
+  }, [state, ready, user, signOut, mutate, syncStatus, syncError]);
 
+  if (!ready) return <main className="mx-auto max-w-lg p-8 text-sm">
+    {syncStatus === "error" ? <div className="space-y-4"><p>Could not load your workspace. No cloud data was overwritten.</p><p>{syncError}</p><p>A local account copy, if available, remains in this browser. Do not clear browser storage.</p>{scope && scope !== "guest" && <button className="underline" onClick={() => { const copy = localStorage.getItem(`${STORAGE_KEY}.${scope}`); if (!copy) return; const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([copy], { type: "application/json" })); a.download = "student-os-local-backup.json"; a.click(); URL.revokeObjectURL(a.href); }}>Download local backup</button>}{" · "}<button className="underline" onClick={() => window.location.reload()}>Retry</button>{" · "}<button className="underline" onClick={() => void signOut()}>Sign out</button></div> : <p>Loading your workspace…</p>}
+  </main>;
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 

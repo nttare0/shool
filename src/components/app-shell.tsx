@@ -3,13 +3,11 @@
 import {
   ArrowLeft,
   CalendarDays,
-  Cloud,
   CloudOff,
   GraduationCap,
   Layers,
   LayoutDashboard,
   ListChecks,
-  Loader2,
   LogIn,
   LogOut,
   NotebookPen,
@@ -36,33 +34,15 @@ const NAV = [
   { href: "/whiteboard", label: "Whiteboard", icon: PenTool },
 ];
 
-function useSyncLabel() {
-  const { user, syncStatus } = useStore();
-  if (!user) {
-    return { text: "Local mode", icon: CloudOff, tone: "muted" as const, hint: "Sign in to sync across devices" };
-  }
-  switch (syncStatus) {
-    case "synced":
-      return { text: "Synced", icon: Cloud, tone: "success" as const, hint: `Signed in as ${user.email ?? "you"}` };
-    case "syncing":
-      return { text: "Syncing", icon: Loader2, tone: "info" as const, hint: "Saving to the cloud…" };
-    case "error":
-      return { text: "Sync issue", icon: CloudOff, tone: "warning" as const, hint: "Saved on this device only" };
-    case "connecting":
-      return { text: "Connecting", icon: Loader2, tone: "info" as const, hint: "Reaching Firebase…" };
-    default:
-      return { text: "Local mode", icon: CloudOff, tone: "muted" as const, hint: "Sign in to sync across devices" };
-  }
-}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   React.useEffect(() => {
     try { window.localStorage.setItem("student-os.visited", "1"); } catch { /* Storage is optional. */ }
   }, []);
-  const { state, user, signOut } = useStore();
+  const { state, user, signOut, syncStatus, syncError } = useStore();
   const summary = React.useMemo(() => dashboardSummary(state), [state]);
-  const sync = useSyncLabel();
+  const sync = { text: user ? ({ loading: "Connecting", saving: "Saving…", synced: "Cloud synced", error: "Sync error", local: "Local only" }[syncStatus]) : "Local workspace", icon: CloudOff, hint: syncError ?? (user ? "Your account workspace uses Supabase. Check Settings for status." : "Guest data stays in this browser.") };
 
   const active = NAV.find((item) => pathname?.startsWith(item.href));
 
@@ -164,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <div className="flex items-center justify-between gap-2 rounded-xl border bg-card/60 px-3 py-2">
               <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground" title={sync.hint}>
-                <sync.icon className={cn("size-3.5", sync.text === "Syncing" && "animate-spin")} />
+                <sync.icon className="size-3.5" />
                 <span className="truncate">{sync.text}</span>
               </span>
               {user ? (
@@ -203,7 +183,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className="hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] text-muted-foreground sm:flex"
                   title={sync.hint}
                 >
-                  <sync.icon className={cn("size-3", sync.text === "Syncing" && "animate-spin")} />
+                  <sync.icon className="size-3" />
                   {sync.text}
                 </span>
                 <ThemeToggle compact />

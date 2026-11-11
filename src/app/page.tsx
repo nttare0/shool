@@ -75,7 +75,7 @@ const STACK = [
   { name: "shadcn/ui", note: "interface primitives" },
   { name: "bklit", note: "charts & data viz" },
   { name: "Next.js", note: "app router" },
-  { name: "Firebase", note: "auth + Firestore" },
+  { name: "Clerk", note: "account sign-in" },
   { name: "Vercel", note: "deploys" },
 ];
 
@@ -189,7 +189,7 @@ export default function LandingPage() {
                 <ArrowRight />
               </Button>
               <Button render={<Link href="/login" />} size="xl" variant="outline">
-                Sign in to sync
+                Sign in
               </Button>
             </div>
 
@@ -372,7 +372,7 @@ export default function LandingPage() {
 
             <ul className="mt-6 space-y-3 text-sm">
               {[
-                { icon: Shield, text: "Firebase Auth (Google + email) with per-user Firestore docs" },
+                { icon: Shield, text: "Clerk sign-in with account workspace storage" },
                 { icon: LayoutDashboard, text: "Local-first: everything works before you sign in" },
                 { icon: Smartphone, text: "Installable PWA manifest, theme-aware from the start" },
               ].map((item) => (
@@ -428,7 +428,7 @@ export default function LandingPage() {
               Open the dashboard <ArrowRight />
             </Button>
             <Button render={<Link href="/login" />} size="xl" variant="outline">
-              Sync with Firebase
+              Sign in with Clerk
             </Button>
           </div>
         </div>

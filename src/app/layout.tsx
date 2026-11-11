@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
@@ -54,9 +55,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
+        <ClerkProvider>
         <ThemeProvider>
           <InstallProvider><StoreProvider>{children}</StoreProvider></InstallProvider>
         </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
