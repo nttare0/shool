@@ -13,17 +13,17 @@ export function DemoBanner() {
   if (!state.isDemo || dismissed) return null;
 
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-primary/25 bg-primary/[0.06] px-4 py-3">
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
+    <div className="relative mb-4 flex flex-wrap items-start gap-2 rounded-xl border border-primary/25 bg-primary/[0.06] p-3 sm:items-center sm:gap-3">
+      <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
         <Sparkles className="size-4" />
       </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">You&apos;re looking at a sample workspace</p>
-        <p className="text-xs text-muted-foreground">
+      <div className="min-w-0 flex-1 pr-6 sm:pr-0">
+        <p className="text-xs font-medium sm:text-sm">You&apos;re looking at a sample workspace</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground sm:text-xs">
           Tasks, notes and study sessions are pre-filled so the charts have something to show.
         </p>
       </div>
-      <div className="flex items-center gap-1.5">
+      <div className="flex w-full flex-wrap items-center gap-1.5 pl-9 sm:w-auto sm:pl-0">
         <Button onClick={claimDemo} size="xs" variant="ghost">
           Keep samples
         </Button>
@@ -32,6 +32,7 @@ export function DemoBanner() {
         </Button>
         <Button
           aria-label="Dismiss"
+          className="absolute right-2 top-2 sm:static"
           onClick={() => setDismissed(true)}
           size="icon-xs"
           variant="ghost"

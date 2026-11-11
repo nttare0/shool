@@ -40,14 +40,16 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
         <button
           aria-label={option.label}
           className={cn(
-            "inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground",
+            "inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground",
             current === option.value && "bg-accent text-accent-foreground",
           )}
           key={option.value}
+          aria-pressed={current === option.value}
           onClick={() => setTheme(option.value)}
           type="button"
         >
           <option.icon className="size-3.5" />
+          {option.label}
         </button>
       ))}
     </div>

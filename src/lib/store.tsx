@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { createClient } from "@supabase/supabase-js";
+import { deleteAccountResources } from "./account-deletion";
 import { createEmptyState, createSeedState, SUBJECT_PALETTE, uid } from "./seed";
 import type {
   AppState,
@@ -25,6 +26,7 @@ type StoreValue = {
   ready: boolean;
   user: AuthUser | null;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   retrySync: () => void;
   syncStatus: "local" | "loading" | "saving" | "synced" | "error";
   syncError: string | null;
@@ -99,6 +101,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [syncError, setSyncError] = React.useState<string | null>(null);
   const [recovery, setRecovery] = React.useState<{ local: AppState; remote: AppState | null } | null>(null);
   const [retry, setRetry] = React.useState(0);
+  const deleting = React.useRef(false);
   const latest = React.useRef(0);
   const initialJson = React.useRef<string | null>(null);
   const writeQueue = React.useRef<Promise<void>>(Promise.resolve());
@@ -161,7 +164,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [scope, client, getToken]);
 
   React.useEffect(() => {
-    if (!ready || !scope) return;
+    if (!ready || !scope || deleting.current) return;
     try { window.localStorage.setItem(scope === "guest" ? STORAGE_KEY : `${STORAGE_KEY}.${scope}`, JSON.stringify(state)); } catch { /* storage can be unavailable */ }
     if (scope === "guest" || !client) return;
     if (JSON.stringify(state) === initialJson.current) return;
@@ -170,6 +173,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setSyncStatus("saving");
     const timer = window.setTimeout(() => {
       writeQueue.current = writeQueue.current.then(async () => {
+        if (deleting.current) return;
         const { error } = await client.from("student_os_workspaces").upsert({ user_id: scope, state, updated_at: new Date().toISOString() });
         if (error) throw error;
         if (latest.current === version) { try { window.localStorage.removeItem(`${STORAGE_KEY}.${scope}.pending`); } catch { /* optional */ } setSyncStatus("synced"); setSyncError(null); }
@@ -195,6 +199,34 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       syncStatus,
       syncError,
       retrySync: () => setRetry((n) => n + 1),
+      deleteAccount: async () => {
+        if (!clerkUser || !client || !scope || scope === "guest") throw new Error("Sign in to delete your account.");
+        if (!clerkUser.deleteSelfEnabled) throw new Error("Account deletion is disabled in Clerk. Ask the site administrator to enable users deleting their own accounts; no data was deleted.");
+        deleting.current = true;
+        ++latest.current;
+        try {
+          // Drain any in-flight saves before deleting, and prevent queued saves from recreating the row.
+          await writeQueue.current;
+          await deleteAccountResources({
+            deleteWorkspace: async () => {
+              const { error } = await client.from("student_os_workspaces").delete().eq("user_id", scope);
+              if (error) throw new Error(`Could not delete your cloud workspace: ${error.message}`);
+            },
+            workspaceExists: async () => {
+              const { data, error } = await client.from("student_os_workspaces").select("user_id").eq("user_id", scope).maybeSingle();
+              if (error) throw new Error("Could not verify cloud workspace deletion. Your account was not deleted.");
+              return Boolean(data);
+            },
+            deleteIdentity: async () => { await clerkUser.delete(); },
+            clearLocal: () => { try { localStorage.removeItem(`${STORAGE_KEY}.${scope}`); localStorage.removeItem(`${STORAGE_KEY}.${scope}.pending`); } catch { /* Browser storage may be unavailable. */ } },
+          });
+          window.location.assign("/?welcome=1");
+        } catch (error) {
+          setSyncStatus("error");
+          setSyncError("Account deletion did not finish. Saving is paused; export a backup and retry deletion.");
+          throw error;
+        }
+      },
       signOut: async () => {
         if ((syncStatus === "saving" || syncStatus === "error") && !window.confirm("Your changes may not be saved to the cloud. Sign out anyway?")) return;
         await signOut();
@@ -391,7 +423,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       claimDemo: () => mutate((prev) => ({ ...prev, isDemo: false })),
       clearEverything: () => setState(createEmptyState()),
     };
-  }, [state, ready, user, signOut, mutate, syncStatus, syncError]);
+  }, [state, ready, user, signOut, mutate, syncStatus, syncError, clerkUser, client, scope]);
 
   function downloadCopy(copy: AppState, name: string) {
     const url = URL.createObjectURL(new Blob([JSON.stringify(copy, null, 2)], { type: "application/json" }));

@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import * as React from "react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { InstallApp } from "@/components/install-app";
 import { PageHeading, Skeleton } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,7 @@ export default function SettingsPage() {
     syncError,
     retrySync,
     signOut,
+    deleteAccount,
     setFocusGoal,
     addSubject,
     renameSubject,
@@ -48,6 +50,9 @@ export default function SettingsPage() {
   const [subjectDraft, setSubjectDraft] = React.useState("");
   const [removingSubject, setRemovingSubject] = React.useState<string | null>(null);
   const [confirmWipe, setConfirmWipe] = React.useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
+  const [deleting, setDeleting] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   React.useEffect(() => setGoalDraft(String(state.focusGoalMinutes)), [state.focusGoalMinutes]);
 
@@ -78,6 +83,11 @@ export default function SettingsPage() {
       />
 
       <InstallApp />
+      <section className="rounded-2xl border bg-card p-5">
+        <h2 className="text-sm font-semibold">Appearance</h2>
+        <p className="mb-3 mt-0.5 text-xs text-muted-foreground">Choose light, dark, or follow your device’s theme.</p>
+        <ThemeToggle />
+      </section>
 
       {/* Account */}
       <section className="rounded-2xl border bg-card p-5">
@@ -249,6 +259,23 @@ export default function SettingsPage() {
         </div>
 
       </section>
+      <section className="rounded-2xl border bg-card p-5">
+        <h2 className="text-sm font-semibold">Terms &amp; conditions</h2>
+        <p className="mt-1 text-xs text-muted-foreground">Read how the service and your workspace data are handled.</p>
+        <Button className="mt-3" render={<Link href="/terms" />} size="sm" variant="outline">Read terms</Button>
+      </section>
+      {user && <section className="rounded-2xl border border-destructive/30 bg-card p-5">
+        <h2 className="text-sm font-semibold">Delete account</h2>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Permanently delete your Clerk account and its Supabase workspace. This cannot be undone. Export a backup first and sign out on other devices before deleting. Guest data, copies on other devices, and external backups are not removed.</p>
+        <Label className="mt-3 block text-xs" htmlFor="delete-account-confirmation">Type DELETE to confirm</Label>
+        <Input className="mt-1 max-w-xs" id="delete-account-confirmation" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} autoComplete="off" />
+        <Button className="mt-3" disabled={deleting || deleteConfirmation !== "DELETE"} size="sm" variant="destructive" onClick={async () => {
+          if (!window.confirm("Permanently delete your account and cloud workspace? This cannot be undone.")) return;
+          setDeleting(true); setDeleteError(null);
+          try { await deleteAccount(); } catch (error) { setDeleteError(error instanceof Error ? error.message : "Deletion failed. Try again."); setDeleting(false); }
+        }}><Trash2 /> {deleting ? "Deleting…" : "Delete account permanently"}</Button>
+        {deleteError && <p role="alert" className="mt-3 break-words text-xs text-destructive">{deleteError}</p>}
+      </section>}
     </div>
   );
 }

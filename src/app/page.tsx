@@ -32,7 +32,6 @@ import {
   StreakHeatmap,
   SubjectRingChart,
 } from "@/components/dashboard-charts";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { masteryBySubject, heatmapWeeks, minutesByDay } from "@/lib/analytics";
@@ -146,7 +145,6 @@ export default function LandingPage() {
           </nav>
 
           <div className="ml-auto flex items-center gap-1.5">
-            <ThemeToggle compact />
             <Button render={<Link href="/dashboard" />} size="sm">
               Open the app
               <ArrowRight />

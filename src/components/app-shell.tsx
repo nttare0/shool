@@ -13,12 +13,12 @@ import {
   NotebookPen,
   PenTool,
   Timer,
+  Settings,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { dashboardSummary, formatMinutes } from "@/lib/analytics";
@@ -32,6 +32,7 @@ const NAV = [
   { href: "/flashcards", label: "Flashcards", icon: Layers },
   { href: "/focus", label: "Focus", icon: Timer },
   { href: "/whiteboard", label: "Whiteboard", icon: PenTool },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 
@@ -42,7 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
   const { state, user, signOut, syncStatus, syncError } = useStore();
   const summary = React.useMemo(() => dashboardSummary(state), [state]);
-  const sync = { text: user ? ({ loading: "Connecting", saving: "Saving…", synced: "Cloud synced", error: "Sync error", local: "Local only" }[syncStatus]) : "Local workspace", icon: CloudOff, hint: syncError ?? (user ? "Your account workspace uses Supabase. Check Settings for status." : "Guest data stays in this browser.") };
+  const sync = { text: ({ loading: "Connecting", saving: "Saving…", synced: "Cloud synced", error: "Sync error", local: "Local only" }[syncStatus]), icon: CloudOff, hint: syncError ?? (user ? "Your account workspace uses Supabase. Check Settings for status." : "Guest data stays in this browser.") };
 
   const active = NAV.find((item) => pathname?.startsWith(item.href));
 
@@ -143,10 +144,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex items-center justify-between gap-2 rounded-xl border bg-card/60 px-3 py-2">
-              <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground" title={sync.hint}>
+              {user ? <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground" title={sync.hint}>
                 <sync.icon className="size-3.5" />
                 <span className="truncate">{sync.text}</span>
-              </span>
+              </span> : <span className="text-[11px] text-muted-foreground">Account</span>}
               {user ? (
                 <Button onClick={() => void signOut()} size="icon-xs" variant="ghost">
                   <LogOut />
@@ -179,14 +180,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="ml-auto flex items-center gap-1.5">
-                <span
+                {user && <span
                   className="hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] text-muted-foreground sm:flex"
                   title={sync.hint}
                 >
                   <sync.icon className="size-3" />
                   {sync.text}
-                </span>
-                <ThemeToggle compact />
+                </span>}
+                <Button aria-label="Settings" render={<Link href="/settings" />} size="icon-sm" variant="ghost"><Settings /></Button>
                 {user ? (
                   <div className="flex items-center gap-1.5">
                     <span className="hidden max-w-[140px] truncate text-xs text-muted-foreground sm:block">
@@ -236,9 +237,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link className="inline-flex items-center gap-1 hover:text-foreground" href="/?welcome=1">
                 <ArrowLeft className="size-3" /> Back to the landing page
               </Link>
-              <Link className="ml-auto hover:text-foreground" href="/settings">
-                Settings
-              </Link>
+              <Link className="ml-auto hover:text-foreground" href="/terms">Terms &amp; conditions</Link>
             </div>
           </footer>
         </div>
