@@ -1,7 +1,6 @@
-# 🎓 Student OS — v2
+# 🎓 Student OS
 
 > Tasks, notes, flashcards, a focus timer and a whiteboard in one calm workspace.
-> A ground-up redesign of [nttare/SCHOOL](https://github.com/nttare/SCHOOL) on **shadcn/ui** and **bklit** charts.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-000?style=flat-square&logo=next.js)
 ![React](https://img.shields.io/badge/React-19-087ea4?style=flat-square&logo=react)
@@ -101,7 +100,7 @@ Firebase-synced workspaces are not imported; export local copies before switchin
 
 ## Credits
 
-- Original project: [nttare/SCHOOL](https://github.com/nttare/SCHOOL) — MIT, preserved in `legacy/`.
+- — MIT, preserved in `legacy/`.
 - UI primitives: [shadcn/ui](https://ui.shadcn.com) (base-ui flavour, from the bklit repo).
 - Charts: [bklit](https://bklit.com) — MIT, `packages/ui` registry components vendored into `src/components/charts`.
 - Icons: [lucide](https://lucide.dev). Fonts: Geist.
