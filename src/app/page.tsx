@@ -122,6 +122,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-svh bg-background">
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       {/* Nav */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
@@ -132,7 +133,7 @@ export default function LandingPage() {
             <span className="text-sm font-semibold tracking-tight max-[320px]:hidden">Student OS</span>
           </Link>
 
-          <nav className="ml-6 hidden items-center gap-1 text-xs text-muted-foreground md:flex">
+          <nav aria-label="Page sections" className="ml-6 hidden items-center gap-1 text-xs text-muted-foreground md:flex">
             <a className="rounded-md px-2.5 py-1.5 hover:bg-muted hover:text-foreground" href="#features">
               Features
             </a>
@@ -153,6 +154,7 @@ export default function LandingPage() {
         </div>
       </header>
 
+      <main id="main-content" tabIndex={-1}>
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="grid-bg pointer-events-none absolute inset-0 opacity-60" />
@@ -432,6 +434,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      </main>
       <footer className="border-t">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-6 text-[11px] text-muted-foreground sm:px-6">
           <span className="flex items-center gap-1.5">

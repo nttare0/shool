@@ -49,6 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-svh bg-background">
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       <div className="mx-auto flex w-full max-w-[1560px]">
         {/* Sidebar */}
         <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-4 lg:flex">
@@ -62,7 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          <nav className="flex flex-col gap-0.5">
+          <nav aria-label="Main navigation" className="flex flex-col gap-0.5">
             {NAV.map((item) => {
               const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
               return (
@@ -71,6 +72,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     "group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                     isActive && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
                   )}
+                  aria-current={isActive ? "page" : undefined}
                   href={item.href}
                   key={item.href}
                 >
@@ -149,7 +151,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="truncate">{sync.text}</span>
               </span> : <span className="text-[11px] text-muted-foreground">Account</span>}
               {user ? (
-                <Button onClick={() => void signOut()} size="icon-xs" variant="ghost">
+                <Button aria-label="Sign out" onClick={() => void signOut()} size="icon-xs" variant="ghost">
                   <LogOut />
                 </Button>
               ) : (
@@ -207,7 +209,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Mobile nav */}
-            <nav className="scrollbar-slim flex max-w-full gap-1 overflow-x-auto border-t px-3 py-1.5 lg:hidden">
+            <nav aria-label="Main navigation" className="scrollbar-slim flex max-w-full gap-1 overflow-x-auto border-t px-3 py-1.5 lg:hidden">
               {NAV.map((item) => {
                 const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                 return (
@@ -216,6 +218,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       "flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground",
                       isActive && "bg-accent font-medium text-accent-foreground",
                     )}
+                    aria-current={isActive ? "page" : undefined}
                     href={item.href}
                     key={item.href}
                   >
@@ -227,12 +230,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
           </header>
 
-          <main className="min-w-0 flex-1 px-3 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 px-3 py-6 sm:px-6 lg:px-8 lg:py-8">
             <div className="mx-auto w-full min-w-0 max-w-6xl">{children}</div>
           </main>
 
           <footer className="border-t px-4 py-4 text-xs text-muted-foreground sm:px-6">
-            <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="safe-area-bottom mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-4 gap-y-2">
               <span>Made with shadcn/ui + bklit charts</span>
               <Link className="inline-flex items-center gap-1 hover:text-foreground" href="/?welcome=1">
                 <ArrowLeft className="size-3" /> Back to the landing page
