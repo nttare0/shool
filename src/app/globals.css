@@ -227,6 +227,25 @@
 
   html {
     scroll-behavior: smooth;
+    color-scheme: light;
+  }
+
+  html.dark { color-scheme: dark; }
+
+  /* Keep keyboard focus visible on custom controls, not just shared buttons. */
+  :where(a, button, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   body {
@@ -280,3 +299,19 @@
     background-color: color-mix(in oklab, var(--muted-foreground) 30%, transparent);
   }
 }
+
+/* The skip link stays visually hidden until reached by keyboard. */
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}
+.skip-link:focus { transform: translateY(0); }
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
