@@ -13,6 +13,7 @@ import type {
   FocusSession,
   Note,
   Priority,
+  ScheduleEntry,
   Stroke,
   Task,
 } from "./types";
@@ -30,6 +31,9 @@ type StoreValue = {
   retrySync: () => void;
   syncStatus: "local" | "loading" | "saving" | "synced" | "error";
   syncError: string | null;
+
+  addScheduleEntry: (input: Omit<ScheduleEntry, "id">) => void;
+  deleteScheduleEntry: (id: string) => void;
 
   addTask: (input: {
     title: string;
@@ -250,6 +254,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if ((syncStatus === "saving" || syncStatus === "error") && !window.confirm("Your changes may not be saved to the cloud. Sign out anyway?")) return;
         await signOut();
       },
+
+      addScheduleEntry: (entry) => mutate((prev) => ({
+        ...prev,
+        schedule: [...(prev.schedule ?? []), { ...entry, title: entry.title.trim(), id: uid() }],
+      })),
+      deleteScheduleEntry: (id) => mutate((prev) => ({
+        ...prev,
+        schedule: (prev.schedule ?? []).filter((entry) => entry.id !== id),
+      })),
 
       addTask: ({ title, subjectId, dueDate, priority }) =>
         mutate((prev) => ({

@@ -4,6 +4,7 @@ import { CalendarDays, Check, Circle, ListChecks, Plus, Trash2, X } from "lucide
 import * as React from "react";
 
 import { PageHeading, Skeleton } from "@/components/stat-card";
+import { TimetableManager } from "@/components/school-calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -164,6 +165,8 @@ export default function TasksPage() {
           </div>
         </form>
       ) : null}
+
+      <div className="mb-4"><TimetableManager /></div>
 
       <div className="mb-4 flex flex-wrap items-center gap-1.5">
         {FILTERS.map((option) => (
