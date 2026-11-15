@@ -26,6 +26,7 @@ import {
 } from "@/components/dashboard-charts";
 import { DashboardClock } from "@/components/dashboard-clock";
 import { DemoBanner } from "@/components/demo-banner";
+import { SchoolCalendar } from "@/components/school-calendar";
 import { PageHeading, Skeleton, StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ function greeting() {
 export default function DashboardPage() {
   const { state, ready, user } = useStore();
   const subjects = useSubjects();
+  const [calendarView, setCalendarView] = React.useState<"activity" | "month">("activity");
 
   const summary = React.useMemo(() => dashboardSummary(state), [state]);
   const focusSeries = React.useMemo(() => minutesByDay(state.sessions, 21), [state.sessions]);
@@ -258,11 +260,15 @@ export default function DashboardPage() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <ChartFrame
+          action={<div className="flex gap-1" aria-label="Calendar view">
+            <Button size="xs" variant={calendarView === "activity" ? "secondary" : "ghost"} aria-pressed={calendarView === "activity"} onClick={() => setCalendarView("activity")}>Activity</Button>
+            <Button size="xs" variant={calendarView === "month" ? "secondary" : "ghost"} aria-pressed={calendarView === "month"} onClick={() => setCalendarView("month")}>Calendar</Button>
+          </div>}
           className="lg:col-span-2"
-          description="Every cell is a day — darker means more focus minutes"
-          title="Study consistency"
+          description={calendarView === "activity" ? "Every cell is a day — darker means more focus minutes" : "Tasks and school classes by date"}
+          title={calendarView === "activity" ? "Study consistency" : "Calendar"}
         >
-          <StreakHeatmap data={heat} />
+          {calendarView === "activity" ? <StreakHeatmap data={heat} /> : <SchoolCalendar />}
         </ChartFrame>
 
         <ChartFrame description="Average flashcard confidence per subject" title="Mastery">

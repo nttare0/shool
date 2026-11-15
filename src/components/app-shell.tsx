@@ -3,13 +3,13 @@
 import {
   ArrowLeft,
   CalendarDays,
-  CloudOff,
   GraduationCap,
   Layers,
   LayoutDashboard,
   ListChecks,
   LogIn,
   LogOut,
+  UserRound,
   NotebookPen,
   PenTool,
   Timer,
@@ -21,6 +21,7 @@ import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Menu, MenuTrigger, MenuPopup, MenuItem, MenuLinkItem } from "@/components/ui/menu";
 import { dashboardSummary, formatMinutes } from "@/lib/analytics";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -43,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
   const { state, user, signOut, syncStatus, syncError } = useStore();
   const summary = React.useMemo(() => dashboardSummary(state), [state]);
-  const sync = { text: ({ loading: "Connecting", saving: "Saving…", synced: "Cloud synced", error: "Sync error", local: "Local only" }[syncStatus]), icon: CloudOff, hint: syncError ?? (user ? "Your account workspace uses Supabase. Check Settings for status." : "Guest data stays in this browser.") };
+  const syncText = ({ loading: "Connecting", saving: "Saving…", synced: "Cloud synced", error: "Sync error", local: "Local only" }[syncStatus]);
 
   const active = NAV.find((item) => pathname?.startsWith(item.href));
 
@@ -64,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav aria-label="Main navigation" className="flex flex-col gap-0.5">
-            {NAV.map((item) => {
+            {NAV.filter((item) => !user || item.href !== "/settings").map((item) => {
               const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
               return (
                 <Link
@@ -145,21 +146,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </p>
             </div>
 
-            <div className="flex items-center justify-between gap-2 rounded-xl border bg-card/60 px-3 py-2">
-              {user ? <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground" title={sync.hint}>
-                <sync.icon className="size-3.5" />
-                <span className="truncate">{sync.text}</span>
-              </span> : <span className="text-[11px] text-muted-foreground">Account</span>}
-              {user ? (
-                <Button aria-label="Sign out" onClick={() => void signOut()} size="icon-xs" variant="ghost">
-                  <LogOut />
-                </Button>
-              ) : (
-                <Button render={<Link href="/login" />} size="xs" variant="ghost">
-                  Sign in
-                </Button>
-              )}
-            </div>
+            {!user && <div className="flex items-center justify-between gap-2 rounded-xl border bg-card/60 px-3 py-2">
+              <span className="text-[11px] text-muted-foreground">Account</span>
+              <Button render={<Link href="/login" />} size="xs" variant="ghost">Sign in</Button>
+            </div>}
           </div>
         </aside>
 
@@ -182,35 +172,31 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="ml-auto flex items-center gap-1.5">
-                {user && <span
-                  className="hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] text-muted-foreground sm:flex"
-                  title={sync.hint}
-                >
-                  <sync.icon className="size-3" />
-                  {sync.text}
-                </span>}
-                <Button aria-label="Settings" render={<Link href="/settings" />} size="icon-sm" variant="ghost"><Settings /></Button>
                 {user ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="hidden max-w-[140px] truncate text-xs text-muted-foreground sm:block">
-                      {user.email}
-                    </span>
-                    <Button onClick={() => void signOut()} size="xs" variant="outline">
-                      Sign out
-                    </Button>
-                  </div>
-                ) : (
-                  <Button render={<Link href="/login" />} size="xs" variant="outline">
-                    <LogIn />
-                    Sign in
-                  </Button>
-                )}
+                  <Menu>
+                    <MenuTrigger aria-label="Open account menu" className="grid size-9 place-items-center rounded-full border bg-card text-foreground hover:bg-muted">
+                      <UserRound className="size-4" />
+                    </MenuTrigger>
+                    <MenuPopup align="end" className="w-56">
+                      <div className="px-2 py-2 text-xs text-muted-foreground">
+                        <p className="truncate font-medium text-foreground">{user.name || "Your account"}</p>
+                        {user.email && <p className="truncate">{user.email}</p>}
+                        <p title={syncError ?? undefined}>{syncText}</p>
+                      </div>
+                      <MenuLinkItem render={<Link href="/settings" />}><Settings /> Settings</MenuLinkItem>
+                      <MenuItem onClick={() => void signOut()}><LogOut /> Sign out</MenuItem>
+                    </MenuPopup>
+                  </Menu>
+                ) : <>
+                  <Button aria-label="Settings" render={<Link href="/settings" />} size="icon-sm" variant="ghost"><Settings /></Button>
+                  <Button render={<Link href="/login" />} size="xs" variant="outline"><LogIn /> Sign in</Button>
+                </>}
               </div>
             </div>
 
             {/* Mobile nav */}
             <nav aria-label="Main navigation" className="scrollbar-slim flex max-w-full gap-1 overflow-x-auto border-t px-3 py-1.5 lg:hidden">
-              {NAV.map((item) => {
+              {NAV.filter((item) => !user || item.href !== "/settings").map((item) => {
                 const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
                 return (
                   <Link

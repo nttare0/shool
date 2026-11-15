@@ -58,10 +58,22 @@ export interface Stroke {
   erase: boolean;
 }
 
+export interface ScheduleEntry {
+  id: string;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  repeat: "once" | "weekly";
+  until: string | null;
+}
+
 export interface AppState {
   version: 2;
   subjects: Subject[];
   tasks: Task[];
+  /** Optional for workspaces saved before the timetable was introduced. */
+  schedule?: ScheduleEntry[];
   notes: Note[];
   decks: Deck[];
   sessions: FocusSession[];
