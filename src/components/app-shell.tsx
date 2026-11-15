@@ -37,6 +37,15 @@ const NAV = [
 ];
 
 
+function ProfileIcon({ imageUrl }: { imageUrl: string | null }) {
+  const [failed, setFailed] = React.useState(false);
+  return imageUrl && !failed ? (
+    // Clerk provides the authenticated user's avatar URL; no image optimization is needed.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img alt="" className="size-full rounded-full object-cover" src={imageUrl} onError={() => setFailed(true)} />
+  ) : <UserRound aria-hidden="true" className="size-4" />;
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   React.useEffect(() => {
@@ -175,7 +184,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {user ? (
                   <Menu>
                     <MenuTrigger aria-label="Open account menu" className="grid size-9 place-items-center rounded-full border bg-card text-foreground hover:bg-muted">
-                      <UserRound className="size-4" />
+                      <ProfileIcon key={user.imageUrl ?? user.uid} imageUrl={user.imageUrl} />
                     </MenuTrigger>
                     <MenuPopup align="end" className="w-56">
                       <div className="px-2 py-2 text-xs text-muted-foreground">
