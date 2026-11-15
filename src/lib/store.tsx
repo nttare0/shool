@@ -101,6 +101,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [syncError, setSyncError] = React.useState<string | null>(null);
   const [recovery, setRecovery] = React.useState<{ local: AppState; remote: AppState | null } | null>(null);
   const [retry, setRetry] = React.useState(0);
+  const [slowLoading, setSlowLoading] = React.useState(false);
   const deleting = React.useRef(false);
   const latest = React.useRef(0);
   const initialJson = React.useRef<string | null>(null);
@@ -111,6 +112,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
     return typeof window !== "undefined" && url && key ? createClient(url, key, { accessToken: async () => await getToken() }) : null;
   }, [getToken]);
+
+  React.useEffect(() => {
+    if (ready || syncStatus === "error") {
+      setSlowLoading(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setSlowLoading(true), 8000);
+    return () => window.clearTimeout(timer);
+  }, [ready, syncStatus, scope]);
 
   React.useEffect(() => {
     if (!scope) return;
@@ -125,10 +135,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setSyncStatus("loading");
+    const timeout = window.setTimeout(() => {
+      cancelled = true;
+      setSyncStatus("error");
+      setSyncError("Connecting to your account is taking too long. Check your connection and try again. Your saved data has not been changed.");
+    }, 20000);
     (async () => {
       try {
         if (!client) throw new Error("Supabase is not configured.");
         const token = await getToken();
+        if (cancelled) return;
         if (!token) throw new Error("Your Clerk session is not ready. Please sign in again.");
         let claims: { role?: string };
         try { claims = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); }
@@ -136,6 +152,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (claims.role !== "authenticated") throw new Error("Clerk session tokens need the role claim set to authenticated for Supabase. Ask the administrator to configure it in Clerk.");
         // Finish queued writes from the previous session before reading.
         await writeQueue.current;
+        if (cancelled) return;
         const { data, error } = await client.from("student_os_workspaces").select("state").eq("user_id", scope).maybeSingle();
         if (error) throw error;
         if (cancelled) return;
@@ -158,9 +175,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         setSyncStatus("error");
         setSyncError(error && typeof error === "object" && "message" in error ? String(error.message) : "Could not load your cloud workspace.");
+      } finally {
+        window.clearTimeout(timeout);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; window.clearTimeout(timeout); };
   }, [scope, client, getToken]);
 
   React.useEffect(() => {
@@ -458,7 +477,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         {scope && scope !== "guest" && loadLocal(`${STORAGE_KEY}.${scope}`) && <button className="underline" onClick={() => downloadCopy(loadLocal(`${STORAGE_KEY}.${scope}`)!, "student-os-local-backup.json")}>Download local backup</button>}
         <button className="underline" onClick={() => window.location.reload()}>Retry</button></>}
       <button className="block underline" onClick={() => void signOut()}>Sign out</button>
-    </div> : <p>Loading your workspace…</p>}
+    </div> : <div className="space-y-3">
+      <div role="status">
+        <p>Loading your workspace…</p>
+        {slowLoading && <p className="text-muted-foreground">This is taking longer than expected. Check your connection and try again if it does not finish.</p>}
+      </div>
+      {slowLoading && <button className="underline" onClick={() => window.location.reload()}>Reload</button>}
+    </div>}
   </main>;
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

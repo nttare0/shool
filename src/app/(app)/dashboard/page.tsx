@@ -24,6 +24,7 @@ import {
   StreakHeatmap,
   SubjectRingChart,
 } from "@/components/dashboard-charts";
+import { DashboardClock } from "@/components/dashboard-clock";
 import { DemoBanner } from "@/components/demo-banner";
 import { PageHeading, Skeleton, StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
@@ -125,6 +126,8 @@ export default function DashboardPage() {
         }
         title={`${greeting()}${user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋`}
       />
+
+      <DashboardClock />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
