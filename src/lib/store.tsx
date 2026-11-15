@@ -20,7 +20,7 @@ import type {
 
 const STORAGE_KEY = "student-os.v2";
 
-type AuthUser = { uid: string; email: string | null; name: string | null };
+type AuthUser = { uid: string; email: string | null; name: string | null; imageUrl: string | null };
 
 type StoreValue = {
   state: AppState;
@@ -98,6 +98,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     uid: clerkUser.id,
     email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
     name: clerkUser.fullName ?? clerkUser.firstName ?? null,
+    imageUrl: clerkUser.hasImage ? clerkUser.imageUrl : null,
   }) : null, [clerkUser]);
   const scope = isLoaded ? (user?.uid ?? "guest") : null;
   const [loadedScope, setLoadedScope] = React.useState<string | null>(null);
